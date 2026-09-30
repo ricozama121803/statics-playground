@@ -1,0 +1,1695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statics Playground</title>
+<style>
+:root {
+  --bg:#f5f4ef; --panel:#ffffff; --ink:#1d2330; --muted:#6b7280; --line:#dedcd3; --grid:#eceae2;
+  --accent:#1c6dd0; --force:#d9480f; --react:#2b8a3e; --tension:#7048e8; --moment:#c2255c; --warn:#c92a2a;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(0,0,0,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#14171d; --panel:#1c2028; --ink:#e7e9ee; --muted:#9aa1ae; --line:#2d333f; --grid:#242934;
+    --accent:#74b0ff; --force:#ff8a5c; --react:#69db7c; --tension:#b197fc; --moment:#f783ac; --warn:#ff8787;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#14171d; --panel:#1c2028; --ink:#e7e9ee; --muted:#9aa1ae; --line:#2d333f; --grid:#242934;
+  --accent:#74b0ff; --force:#ff8a5c; --react:#69db7c; --tension:#b197fc; --moment:#f783ac; --warn:#ff8787;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; }
+body { background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+header { display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:14px 16px 0; max-width:1280px; margin:0 auto; }
+header h1 { font-size:18px; margin:0; letter-spacing:.2px; font-weight:650; }
+header h1 span { color:var(--accent); }
+nav { display:flex; gap:4px; flex-wrap:wrap; flex:1; }
+nav button { border:1px solid transparent; background:transparent; color:var(--muted); padding:7px 12px; border-radius:8px; font:inherit; font-weight:550; cursor:pointer; }
+nav button:hover { color:var(--ink); background:var(--grid); }
+nav button[aria-selected="true"] { color:var(--ink); background:var(--panel); border-color:var(--line); box-shadow:var(--shadow); }
+.icon-btn { display:inline-flex; align-items:center; justify-content:center; padding:0; border:1px solid var(--line); background:var(--panel); color:var(--ink); border-radius:8px; width:36px; height:36px; font-size:16px; cursor:pointer; }
+main { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr); gap:16px; padding:16px; max-width:1280px; margin:0 auto; align-items:start; }
+.card { background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+.canvas-wrap { position:relative; height:clamp(420px, 66vh, 680px); overflow:hidden; }
+canvas { position:absolute; inset:0; width:100%; height:100%; touch-action:none; display:block; }
+.controls { display:flex; flex-wrap:wrap; gap:10px 18px; padding:12px 14px; margin-top:12px; align-items:center; }
+.ctl { display:flex; align-items:center; gap:8px; font-size:13px; }
+.ctl label { color:var(--muted); white-space:nowrap; }
+.ctl input[type=range] { width:150px; accent-color:var(--accent); }
+.ctl output { min-width:64px; font-variant-numeric:tabular-nums; font-weight:600; }
+.ctl.hidden { display:none; }
+button.btn, .ctl button { border:1px solid var(--line); background:var(--panel); color:var(--ink); border-radius:8px; padding:6px 11px; font:inherit; font-size:13px; cursor:pointer; }
+button.btn:hover, .ctl button:hover { border-color:var(--accent); }
+button:disabled, input:disabled { opacity:.45; cursor:not-allowed; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+[data-theme="dark"] button.primary, :root:not([data-theme="light"]) button.primary { color:#0b1220; }
+.seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.seg button { border:0; border-radius:0; background:transparent; padding:6px 10px; font-size:13px; color:var(--muted); cursor:pointer; font-family:inherit; }
+.seg button[aria-pressed="true"] { background:var(--accent); color:#fff; }
+[data-theme="dark"] .seg button[aria-pressed="true"] { color:#0b1220; }
+.side { display:flex; flex-direction:column; gap:12px; }
+.side .card { padding:14px 16px; }
+.side h2 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); font-weight:650; }
+.blurb p { margin:.3em 0; }
+.blurb ul { margin:.3em 0 0; padding-left:1.2em; color:var(--muted); font-size:14px; }
+.chhead { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; gap:8px; flex-wrap:wrap; }
+.score { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.prompt { margin:.2em 0 .6em; font-size:15px; }
+.status { font-size:13px; color:var(--muted); min-height:1.4em; font-variant-numeric:tabular-nums; }
+.bar { height:6px; background:var(--grid); border-radius:3px; overflow:hidden; margin:6px 0 10px; }
+.bar i { display:block; height:100%; width:0; background:var(--react); }
+.ans { display:flex; gap:8px; align-items:center; margin:.4em 0 .6em; }
+.ans input { flex:1; min-width:0; padding:7px 9px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); font:inherit; }
+.row { display:flex; gap:8px; flex-wrap:wrap; }
+.fb { min-height:1.4em; margin:.3em 0; font-weight:600; }
+.fb.ok { color:var(--react); } .fb.bad { color:var(--warn); }
+.hint { font-size:13.5px; color:var(--muted); margin:.3em 0; padding:8px 10px; border-left:3px solid var(--accent); background:var(--bg); border-radius:0 8px 8px 0; }
+.eqrow { padding:7px 0; border-top:1px solid var(--line); }
+.eqrow:first-child { border-top:0; }
+.eqlabel { font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:2px; }
+.eq { font-family:"STIX Two Text","Cambria Math","Latin Modern Math",Georgia,serif; font-size:16.5px; overflow-x:auto; padding-bottom:2px; }
+.eq sub { font-size:.7em; } .eq sup { font-size:.7em; }
+.eq .res { color:var(--accent); font-weight:700; }
+.eq .bad { color:var(--warn); font-weight:600; }
+.eq .ok { color:var(--react); font-weight:600; }
+.eq.note { font-family:inherit; font-size:14px; color:var(--muted); }
+pre.mat { margin:4px 0; font:13.5px/1.25 ui-monospace,"DejaVu Sans Mono",Menlo,Consolas,monospace; overflow-x:auto; }
+.eqgroup { font-size:12px; font-weight:650; text-transform:uppercase; letter-spacing:.08em; color:var(--accent); margin:12px 0 2px; }
+.eqgroup:first-child { margin-top:0; }
+.locked-note { font-size:13px; color:var(--muted); font-style:italic; padding:6px 0; }
+@media (max-width: 900px) {
+  header h1 { flex:1; }
+  nav { order:3; flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; }
+  nav button { white-space:nowrap; }
+  nav { scrollbar-width:none; }
+  nav::-webkit-scrollbar { display:none; }
+  main { grid-template-columns:minmax(0,1fr); }
+  .canvas-wrap { height:clamp(380px, 60vh, 560px); }
+  .ctl input[type=range] { width:120px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Statics <span>Playground</span></h1>
+  <nav id="tabs" role="tablist" aria-label="Modules"></nav>
+  <button class="icon-btn" id="themeBtn" title="Toggle light/dark" aria-label="Toggle light or dark theme"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+</header>
+<main>
+  <section>
+    <div class="card canvas-wrap"><canvas id="cv" aria-label="Interactive statics diagram"></canvas></div>
+    <div class="card controls" id="controls"></div>
+  </section>
+  <aside class="side">
+    <div class="card blurb" id="blurb"></div>
+    <div class="card" id="challenge"></div>
+    <div class="card" id="eq"></div>
+  </aside>
+</main>
+<noscript>This app needs JavaScript.</noscript>
+
+<script>
+'use strict';
+/* =====================================================================
+   CORE MATH — pure functions (no DOM). Tested separately in Node.
+   Conventions: x right, y up, counter-clockwise (CCW) moments positive.
+   For 3D, z is up.
+   ===================================================================== */
+// ==== CORE MATH START
+const CORE = (() => {
+  const v2 = {
+    add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y }),
+    sub: (a, b) => ({ x: a.x - b.x, y: a.y - b.y }),
+    mul: (a, k) => ({ x: a.x * k, y: a.y * k }),
+    dot: (a, b) => a.x * b.x + a.y * b.y,
+    cross: (a, b) => a.x * b.y - a.y * b.x,
+    len: a => Math.hypot(a.x, a.y),
+    unit: a => { const l = Math.hypot(a.x, a.y); return l < 1e-12 ? { x: 0, y: 0 } : { x: a.x / l, y: a.y / l }; }
+  };
+  const v3 = {
+    add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+    sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+    mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k],
+    dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+    cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    len: a => Math.hypot(a[0], a[1], a[2]),
+    unit: a => { const l = Math.hypot(a[0], a[1], a[2]); return l < 1e-12 ? [0, 0, 0] : [a[0] / l, a[1] / l, a[2] / l]; }
+  };
+
+  /* Gauss-Jordan elimination with partial pivoting. Returns null if singular. */
+  function solveLinear(A, b) {
+    const n = b.length;
+    const M = A.map((r, i) => [...r, b[i]]);
+    for (let c = 0; c < n; c++) {
+      let p = c;
+      for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+      if (Math.abs(M[p][c]) < 1e-9) return null;
+      [M[c], M[p]] = [M[p], M[c]];
+      for (let r = 0; r < n; r++) {
+        if (r === c) continue;
+        const f = M[r][c] / M[c][c];
+        for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k];
+      }
+    }
+    return M.map((row, i) => row[n] / row[i]);
+  }
+
+  const det3 = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+                  - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+                  + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+
+  /* ---- Moment of a force F acting at P about pivot O (2D, CCW +) ---- */
+  function moment(O, P, F) {
+    const r = v2.sub(P, O);
+    const rl = v2.len(r), Fl = v2.len(F);
+    const M = v2.cross(r, F);
+    return {
+      r, rl, Fl, M,
+      arm: Fl < 1e-9 ? 0 : Math.abs(M) / Fl,               // perpendicular distance from O to the line of action
+      theta: (rl < 1e-9 || Fl < 1e-9) ? 0 : Math.atan2(v2.cross(r, F), v2.dot(r, F)), // signed angle from r to F
+      Mx: -r.y * F.x, My: r.x * F.y                       // contributions of Fx and Fy (Varignon)
+    };
+  }
+
+  /* ---- Beam ----
+     cfg = { type:'ss'|'cant', L, xa, xb, pts:[{x,P}], udl:{on,a,b,w} }
+     Loads act downward (P>0). 'ss' = pin at xa + roller at xb; 'cant' = fixed at x=0. */
+  function beamSolve(c) {
+    const Pt = c.pts.reduce((s, p) => s + p.P, 0);
+    const Wu = c.udl.on ? c.udl.w * (c.udl.b - c.udl.a) : 0;
+    const xc = c.udl.on ? (c.udl.a + c.udl.b) / 2 : 0;
+    const xa = c.type === 'cant' ? 0 : c.xa;
+    const Mload = c.pts.reduce((s, p) => s + p.P * (p.x - xa), 0) + Wu * (xc - xa); // clockwise load moment about A
+    if (c.type === 'cant') return { type: 'cant', Ax: 0, Ay: Pt + Wu, By: 0, MA: Mload, Pt, Wu, xc, xa, Mload };
+    const span = c.xb - c.xa;
+    const By = Mload / span;
+    return { type: 'ss', Ax: 0, Ay: Pt + Wu - By, By, MA: 0, Pt, Wu, xc, xa, Mload, span };
+  }
+
+  /* Internal shear V and bending moment M (sagging +) just left/right of x.
+     incl=true includes point forces exactly at x. */
+  function beamAt(c, R, x, incl) {
+    const eps = 1e-9;
+    const forces = [];
+    if (c.type === 'cant') forces.push({ x: 0, F: R.Ay });
+    else { forces.push({ x: c.xa, F: R.Ay }); forces.push({ x: c.xb, F: R.By }); }
+    for (const p of c.pts) forces.push({ x: p.x, F: -p.P });
+    let V = 0, M = 0;
+    for (const f of forces) {
+      if (f.x < x - eps || (incl && f.x <= x + eps)) { V += f.F; M += f.F * (x - f.x); }
+    }
+    if (c.type === 'cant' && (x > eps || incl)) M -= R.MA;
+    if (c.udl.on) {
+      const lw = Math.max(0, Math.min(c.udl.b, x) - c.udl.a);
+      if (lw > 0) { V -= c.udl.w * lw; M -= c.udl.w * lw * (x - (c.udl.a + lw / 2)); }
+    }
+    return { V, M };
+  }
+
+  function beamDiagrams(c, R, n = 240) {
+    const events = [0, c.L];
+    if (c.type === 'ss') events.push(c.xa, c.xb);
+    for (const p of c.pts) events.push(p.x);
+    if (c.udl.on) events.push(c.udl.a, c.udl.b);
+    const xs = new Set(events.map(e => +e.toFixed(9)));
+    for (let i = 0; i <= n; i++) xs.add(+(c.L * i / n).toFixed(9));
+    const sorted = [...xs].sort((a, b) => a - b);
+    const ev = new Set(events.map(e => +e.toFixed(9)));
+    const X = [], V = [], M = [];
+    for (const x of sorted) {
+      if (ev.has(x)) {
+        const a = beamAt(c, R, x, false), b = beamAt(c, R, x, true);
+        X.push(x, x); V.push(a.V, b.V); M.push(a.M, b.M);
+      } else {
+        const a = beamAt(c, R, x, true);
+        X.push(x); V.push(a.V); M.push(a.M);
+      }
+    }
+    return { X, V, M };
+  }
+
+  /* ---- 2D particle held by two cables ----
+     Knot P, anchors A and B, external force (H, -W) on the knot.
+     T1*u1 + T2*u2 + (H,-W) = 0 */
+  function cable2D(A, B, P, W, H) {
+    const d1 = v2.sub(A, P), d2 = v2.sub(B, P);
+    const l1 = v2.len(d1), l2 = v2.len(d2);
+    if (l1 < 1e-6 || l2 < 1e-6) return null;
+    const u1 = v2.mul(d1, 1 / l1), u2 = v2.mul(d2, 1 / l2);
+    const det = u1.x * u2.y - u2.x * u1.y;                   // = sin(angle between cables)
+    const sol = Math.abs(det) < 1e-6 ? null : solveLinear([[u1.x, u2.x], [u1.y, u2.y]], [-H, W]);
+    return { d1, d2, l1, l2, u1, u2, det, T1: sol ? sol[0] : NaN, T2: sol ? sol[1] : NaN, ok: !!sol };
+  }
+
+  /* ---- 3D particle held by three cables ----
+     Sum T_i * u_i + (Fx, Fy, -W) = 0 where u_i = (A_i - P)/|A_i - P| */
+  function tripod(A, P, W, Fx = 0, Fy = 0) {
+    const d = A.map(a => v3.sub(a, P));
+    const l = d.map(v3.len);
+    if (l.some(x => x < 1e-6)) return null;
+    const u = d.map((v, i) => v3.mul(v, 1 / l[i]));
+    const m = [0, 1, 2].map(r => [u[0][r], u[1][r], u[2][r]]);
+    const det = det3(m);
+    const sol = Math.abs(det) < 1e-4 ? null : solveLinear(m, [-Fx, -Fy, W]);
+    return { d, l, u, m, det, T: sol || [NaN, NaN, NaN], ok: !!sol };
+  }
+
+  return { v2, v3, solveLinear, det3, moment, beamSolve, beamAt, beamDiagrams, cable2D, tripod };
+})();
+// ==== CORE MATH END
+
+/* =====================================================================
+   UI helpers
+   ===================================================================== */
+const { v2, v3, solveLinear, moment: momentCalc, beamSolve, beamAt, beamDiagrams, cable2D, tripod } = CORE;
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
+const D2R = Math.PI / 180;
+
+function fmt(x, d = 1) {
+  if (!isFinite(x)) return '∞';
+  let s = x.toFixed(d);
+  if (/^-0(\.0+)?$/.test(s)) s = s.slice(1);
+  return s.replace('-', '−');
+}
+const sfmt = (x, d = 1) => { const s = fmt(x, d); return s.startsWith('−') || !isFinite(x) ? s : '+' + s; };
+const par = (x, d = 1) => x < -1e-9 ? `(${fmt(x, d)})` : fmt(x, d);
+const I = s => `<i>${s}</i>`;
+const SB = (b, s) => `<i>${b}</i><sub>${s}</sub>`;
+const RES = s => `<span class="res">${s}</span>`;
+const ROW = (label, html, cls = '') => `<div class="eqrow"><div class="eqlabel">${label}</div><div class="eq ${cls}">${html}</div></div>`;
+const GROUP = s => `<div class="eqgroup">${s}</div>`;
+const SUBN = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+
+const app = { mod: null, w: 0, h: 0, dirty: true, locked: false, snap: true, flash: 0, hideSolution: false };
+const cv = $('#cv'), g = cv.getContext('2d');
+const COL = {};
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['bg', 'panel', 'ink', 'muted', 'line', 'grid', 'accent', 'force', 'react', 'tension', 'moment', 'warn'])
+    COL[k] = cs.getPropertyValue('--' + k).trim();
+}
+const snapv = (x, s) => app.snap ? Math.round(x / s) * s : x;
+
+/* ---- drawing primitives ---- */
+function line(g, x0, y0, x1, y1, c, lw = 1, dash = null) {
+  g.save(); g.strokeStyle = c; g.lineWidth = lw; g.setLineDash(dash || []);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.restore();
+}
+function arrow(g, x0, y0, x1, y1, c, lw = 3, hs = 11, dash = null) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy);
+  if (L < 1.5) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(hs, L * 0.6);
+  g.save(); g.strokeStyle = c; g.fillStyle = c; g.lineWidth = lw; g.lineCap = 'round'; g.setLineDash(dash || []);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1 - ux * hl * 0.7, y1 - uy * hl * 0.7); g.stroke();
+  g.setLineDash([]);
+  g.beginPath(); g.moveTo(x1, y1);
+  g.lineTo(x1 - ux * hl + uy * hl * 0.45, y1 - uy * hl - ux * hl * 0.45);
+  g.lineTo(x1 - ux * hl - uy * hl * 0.45, y1 - uy * hl + ux * hl * 0.45);
+  g.closePath(); g.fill(); g.restore();
+}
+function text(g, s, x, y, c, o = {}) {
+  g.save();
+  g.font = `${o.bold ? '600 ' : ''}${o.size || 13}px system-ui, sans-serif`;
+  g.fillStyle = c; g.textAlign = o.align || 'left'; g.textBaseline = o.base || 'middle';
+  if (o.halo !== false) { g.lineWidth = 4; g.strokeStyle = COL.panel; g.lineJoin = 'round'; g.strokeText(s, x, y); }
+  g.fillText(s, x, y); g.restore();
+}
+function disc(g, x, y, r, fill, stroke, lw = 2) {
+  g.save(); g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { g.fillStyle = fill; g.fill(); }
+  if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.stroke(); }
+  g.restore();
+}
+function handleDot(g, x, y, c, active) {
+  disc(g, x, y, active ? 9 : 7.5, COL.panel, c, 2.5);
+  disc(g, x, y, 2.5, c);
+}
+function hit(hs, x, y) {
+  let best = null, bd = 1e9;
+  for (const h of hs) {
+    let d;
+    if (h.seg) {
+      const [x0, y0, x1, y1] = h.seg, dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1;
+      const t = clamp(((x - x0) * dx + (y - y0) * dy) / L2, 0, 1);
+      d = Math.hypot(x - (x0 + t * dx), y - (y0 + t * dy)) - (h.r || 9) + 8;
+    } else d = Math.hypot(x - h.x, y - h.y) - (h.r || 10) + 8;
+    if (d <= 8 && d < bd) { best = h; bd = d; }
+  }
+  return best;
+}
+function makeView(w, h, ww, wh, cx = 0, cy = 0) {
+  const s = Math.min(w / ww, h / wh);
+  return { s, X: x => w / 2 + (x - cx) * s, Y: y => h / 2 - (y - cy) * s, ix: px => (px - w / 2) / s + cx, iy: py => -(py - h / 2) / s + cy };
+}
+function drawGrid(g, V, w, h, step = 1) {
+  g.save(); g.lineWidth = 1;
+  const x0 = Math.floor(V.ix(0) / step) * step, x1 = Math.ceil(V.ix(w) / step) * step;
+  const y0 = Math.floor(V.iy(h) / step) * step, y1 = Math.ceil(V.iy(0) / step) * step;
+  g.strokeStyle = COL.grid;
+  g.beginPath();
+  for (let x = x0; x <= x1; x += step) { g.moveTo(V.X(x), 0); g.lineTo(V.X(x), h); }
+  for (let y = y0; y <= y1; y += step) { g.moveTo(0, V.Y(y)); g.lineTo(w, V.Y(y)); }
+  g.stroke(); g.restore();
+}
+/* Arc in world angles (CCW +) on a y-up view. */
+function arcW(g, cx, cy, r, a0, a1, c, lw = 2, dash = null) {
+  g.save(); g.strokeStyle = c; g.lineWidth = lw; g.setLineDash(dash || []); g.beginPath();
+  g.arc(cx, cy, r, -a0, -a1, a1 > a0); g.stroke(); g.restore();
+}
+function wrapPi(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
+
+/* ---- generic controls (sliders, toggles, buttons, segmented) ---- */
+function buildControls(mod) {
+  const box = $('#controls'); box.innerHTML = '';
+  mod._ui = [];
+  for (const c of mod.controls) {
+    const el = document.createElement('div'); el.className = 'ctl';
+    let input = null, out = null;
+    if (c.type === 'button') {
+      input = document.createElement('button'); input.textContent = c.label;
+      input.onclick = () => { c.onClick(); app.dirty = true; };
+      el.appendChild(input);
+    } else if (c.type === 'toggle') {
+      input = document.createElement('input'); input.type = 'checkbox'; input.id = 'c_' + c.id;
+      const lab = document.createElement('label'); lab.htmlFor = input.id; lab.textContent = c.label;
+      input.onchange = () => { c.set(input.checked); app.dirty = true; };
+      el.append(input, lab);
+    } else if (c.type === 'seg') {
+      const lab = document.createElement('label'); lab.textContent = c.label;
+      const seg = document.createElement('div'); seg.className = 'seg'; seg.setAttribute('role', 'group');
+      c.options.forEach(([val, name]) => {
+        const b = document.createElement('button'); b.textContent = name; b.dataset.val = val;
+        b.onclick = () => { c.set(val); app.dirty = true; };
+        seg.appendChild(b);
+      });
+      el.append(lab, seg); input = seg;
+    } else {
+      const lab = document.createElement('label'); lab.htmlFor = 'c_' + c.id; lab.textContent = c.label;
+      input = document.createElement('input'); input.type = 'range'; input.id = 'c_' + c.id;
+      input.min = c.min; input.max = c.max; input.step = c.step;
+      out = document.createElement('output');
+      input.oninput = () => { c.set(parseFloat(input.value)); app.dirty = true; };
+      el.append(lab, input, out);
+    }
+    box.appendChild(el);
+    mod._ui.push({ c, el, input, out });
+  }
+}
+function syncControls(mod) {
+  for (const u of mod._ui) {
+    const { c, el, input, out } = u;
+    el.classList.toggle('hidden', !!(c.show && !c.show()));
+    const dis = (app.locked && !c.free) || !!(c.off && c.off());
+    if (c.type === 'seg') {
+      const v = c.get();
+      input.querySelectorAll('button').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.val === String(v))); b.disabled = dis; });
+    } else if (c.type === 'toggle') { input.checked = !!c.get(); input.disabled = dis; }
+    else if (c.type === 'button') input.disabled = dis;
+    else {
+      const v = c.get();
+      if (document.activeElement !== input) input.value = v;
+      out.textContent = (c.fmt ? c.fmt(v) : fmt(v, c.dec || 0)) + (c.unit ? ' ' + c.unit : '');
+      input.disabled = dis;
+    }
+  }
+}
+
+/* =====================================================================
+   MODULE 0 — Feel it: a wrench on a stuck bolt (intuition for moment)
+   ===================================================================== */
+const FeelMod = (() => {
+  const S = {};
+  const K = 0.03;                    // arrow metres per newton
+  const BAR = 6, MMAX = 500;
+  const PIV = { x: -3.6, y: -1.3 };    // pivot (bolt) in world coordinates
+  let V, hs = [], drag = null;
+
+  function reset() {
+    S.r = 3; S.F = 40; S.phi = 90 * D2R; S.tight = 150;
+    S.theta = 0; S.omega = 0; S.turns = 0; S.spinning = false; S.parts = true;
+  }
+  reset();
+  const calc = () => momentCalc({ x: 0, y: 0 }, { x: S.r, y: 0 }, { x: S.F * Math.cos(S.phi), y: S.F * Math.sin(S.phi) });
+  const phiDeg = () => Math.round(wrapPi(S.phi) / D2R);
+
+  /* point in the wrench's own frame -> screen */
+  const B = (bx, by) => {
+    const c = Math.cos(S.theta), s = Math.sin(S.theta);
+    return { x: V.X(PIV.x + bx * c - by * s), y: V.Y(PIV.y + bx * s + by * c) };
+  };
+  const poly = (g, pts, fill, stroke, lw = 2) => {
+    g.save(); g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y)); g.closePath();
+    if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw; g.lineJoin = 'round'; g.stroke(); } g.restore();
+  };
+
+  function step(dt) {
+    const M = app.hideSolution ? 0 : calc().M, T = S.tight;
+    for (let i = 0; i < 4; i++) {
+      const h = dt / 4;
+      if (T > 0 && Math.abs(M) >= T) {                // bolt breaks loose: keeps turning
+        const w = Math.sign(M) * Math.min(5, 0.8 + 0.02 * (Math.abs(M) - T));
+        S.omega = w; S.theta += w * h; S.turns += Math.abs(w * h) / (2 * Math.PI); S.spinning = true;
+      } else {                                        // elastic wind-up against the bolt
+        if (S.spinning) { S.spinning = false; S.theta = wrapPi(S.theta); S.omega = 0; }
+        const eq = clamp(M / (T > 0 ? T : 150), -1.5, 1.5) * 0.5;
+        const w0 = 14, z = 0.45;
+        S.omega += (-w0 * w0 * (S.theta - eq) - 2 * z * w0 * S.omega) * h;
+        S.theta += S.omega * h;
+      }
+    }
+    const eqNow = clamp(M / (T > 0 ? T : 150), -1.5, 1.5) * 0.5;
+    if (S.spinning || Math.abs(S.theta - eqNow) > 2e-4 || Math.abs(S.omega) > 2e-4) app.dirty = true;
+  }
+
+  function dial(g, cx, cy, R, M, T, hide) {
+    g.save(); g.lineCap = 'round'; g.lineWidth = 12; g.strokeStyle = COL.grid;
+    g.beginPath(); g.arc(cx, cy, R, Math.PI, 2 * Math.PI); g.stroke();
+    if (!hide && Math.abs(M) > 0.5) {
+      const f = clamp(M / MMAX, -1, 1), a = -Math.PI / 2 - f * Math.PI / 2;
+      g.strokeStyle = COL.moment; g.beginPath(); g.arc(cx, cy, R, -Math.PI / 2, a, f > 0); g.stroke();
+    }
+    g.restore();
+    if (T > 0) for (const sgn of [-1, 1]) {
+      const a = -Math.PI / 2 - sgn * Math.min(T / MMAX, 1) * Math.PI / 2;
+      line(g, cx + Math.cos(a) * (R - 12), cy + Math.sin(a) * (R - 12), cx + Math.cos(a) * (R + 12), cy + Math.sin(a) * (R + 12), COL.warn, 2.5);
+    }
+    if (!hide) {
+      const a = -Math.PI / 2 - clamp(M / MMAX, -1, 1) * Math.PI / 2;
+      arrow(g, cx, cy, cx + Math.cos(a) * (R - 6), cy + Math.sin(a) * (R - 6), COL.ink, 3, 10);
+    }
+    disc(g, cx, cy, 5, COL.ink);
+    text(g, 'CCW', cx - R - 4, cy + 14, COL.muted, { size: 11, align: 'left', halo: false });
+    text(g, 'CW', cx + R + 4, cy + 14, COL.muted, { size: 11, align: 'right', halo: false });
+    text(g, 'TWIST', cx, cy - R - 20, COL.muted, { size: 11, bold: true, halo: false });
+    text(g, hide ? 'M = ?' : `M = ${sfmt(M, 0)} N·m`, cx, cy + 26, COL.moment, { size: 14, bold: true, align: 'center' });
+  }
+
+  function draw(g, w, h) {
+    V = makeView(w, h, 15, 9.5);
+    drawGrid(g, V, w, h);
+    const m = calc(), hide = app.hideSolution, M = m.M, T = S.tight;
+    const ox = V.X(PIV.x), oy = V.Y(PIV.y), sc = V.s;
+    const Fb = { x: S.F * Math.cos(S.phi), y: S.F * Math.sin(S.phi) };
+
+    // fixed base plate with tick marks (so you can see the bolt turning)
+    g.save(); g.strokeStyle = COL.muted; g.lineWidth = 1.5; g.beginPath(); g.arc(ox, oy, 0.95 * sc, 0, 2 * Math.PI); g.stroke(); g.restore();
+    for (let a = 0; a < 360; a += 15) {
+      const r0 = (a % 90 === 0 ? 0.95 : 0.95) * sc, r1 = (a % 90 === 0 ? 1.25 : 1.1) * sc, c = Math.cos(a * D2R), s = Math.sin(a * D2R);
+      line(g, ox + c * r0, oy - s * r0, ox + c * r1, oy - s * r1, a === 0 ? COL.accent : COL.muted, a === 0 ? 3 : 1);
+    }
+
+    // wrench body
+    const hw = 0.26;
+    poly(g, [B(0, -hw), B(BAR, -hw), B(BAR, hw), B(0, hw)], COL.ink, null);
+    g.save(); g.globalAlpha = 0.9; disc(g, ...[B(0, 0).x, B(0, 0).y], 0.62 * sc, COL.ink); disc(g, B(BAR, 0).x, B(BAR, 0).y, hw * sc, COL.ink); g.restore();
+    for (let i = 1; i <= 5; i++) {
+      const a = B(i, -hw), b = B(i, -hw + 0.13);
+      line(g, a.x, a.y, b.x, b.y, COL.panel, 1.5);
+      const t = B(i, hw + 0.42); text(g, `${i}`, t.x, t.y, COL.muted, { size: 11, align: 'center', halo: false });
+    }
+    // hex bolt
+    poly(g, [0, 1, 2, 3, 4, 5].map(k => B(0.38 * Math.cos(k * Math.PI / 3), 0.38 * Math.sin(k * Math.PI / 3))), COL.panel, COL.accent, 2);
+    line(g, B(0, 0).x, B(0, 0).y, B(0.38, 0).x, B(0.38, 0).y, COL.accent, 2);
+
+    // distance r
+    const d0 = B(0, -0.75), d1 = B(S.r, -0.75);
+    line(g, d0.x, d0.y, d1.x, d1.y, COL.accent, 2);
+    [B(0, -0.6), B(0, -0.9), B(S.r, -0.6), B(S.r, -0.9)].forEach((p, i, a) => { if (i % 2 === 0) line(g, p.x, p.y, a[i + 1].x, a[i + 1].y, COL.accent, 2); });
+    const dm = B(S.r / 2, -1.2); text(g, `r = ${fmt(S.r, 1)} m`, dm.x, dm.y, COL.accent, { bold: true, align: 'center' });
+
+    // forces at the grip
+    const gp = B(S.r, 0);
+    const fb = (bx, by) => B(S.r + bx * K, by * K);
+    if (S.parts && S.F > 0) {
+      const perp = Fb.y, par = Fb.x;
+      if (Math.abs(par) > 0.5) {
+        const e = fb(par, 0); arrow(g, gp.x, gp.y, e.x, e.y, COL.muted, 3, 11, [5, 4]);
+        const l = B(S.r + par * K / 2, -0.55); text(g, `F∥ ${hide ? '' : '= ' + fmt(Math.abs(par), 0) + ' N'}`, l.x, l.y, COL.muted, { size: 12, bold: true, align: 'center' });
+      }
+      if (Math.abs(perp) > 0.5) {
+        const e = fb(0, perp); arrow(g, gp.x, gp.y, e.x, e.y, COL.moment, 3, 11, [5, 4]);
+        const l = B(S.r - 0.25, perp * K / 2); text(g, `F⊥ ${hide ? '' : '= ' + fmt(Math.abs(perp), 0) + ' N'}`, l.x, l.y, COL.moment, { size: 12, bold: true, align: 'right' });
+      }
+    }
+    const tipB = fb(Fb.x, Fb.y);
+    if (S.F > 0) arrow(g, gp.x, gp.y, tipB.x, tipB.y, COL.force, 4.5, 14);
+    text(g, `F = ${fmt(S.F, 0)} N`, tipB.x + 12, tipB.y - 12, COL.force, { bold: true, size: 14 });
+    disc(g, gp.x, gp.y, 9, COL.force, COL.panel, 2.5);
+
+    // twist arrow around the bolt (opposite side to the bar so it doesn't hide it)
+    if (!hide && Math.abs(M) > 0.5) {
+      const ccw = M > 0, R = (1.5 + Math.min(Math.abs(M) / MMAX, 1) * 0.5) * sc, c = S.theta + Math.PI;
+      const a0 = ccw ? c - 100 * D2R : c + 100 * D2R, a1 = ccw ? c + 100 * D2R : c - 100 * D2R;
+      arcW(g, ox, oy, R, a0, a1, COL.moment, 4.5);
+      const ex = ox + Math.cos(a1) * R, ey = oy - Math.sin(a1) * R;
+      const tdx = ccw ? -Math.sin(a1) : Math.sin(a1), tdy = ccw ? -Math.cos(a1) : Math.cos(a1);
+      arrow(g, ex - tdx * 2, ey - tdy * 2, ex + tdx * 10, ey + tdy * 10, COL.moment, 3, 13);
+    }
+
+    // torque meter + bolt status (top right)
+    const R = clamp(w * 0.12, 54, 84), cx = w - R - 34, cy = 24 + R + 24;
+    dial(g, cx, cy, R, M, T, hide);
+    if (T > 0) {
+      const bw = R * 2 + 24, bx = cx - bw / 2, by = cy + 44, frac = hide ? 0 : clamp(Math.abs(M) / T, 0, 1);
+      g.save(); g.fillStyle = COL.grid; g.fillRect(bx, by, bw, 9); g.fillStyle = frac >= 1 ? COL.react : COL.accent; g.fillRect(bx, by, bw * frac, 9); g.restore();
+      text(g, hide ? `Bolt needs ${fmt(T, 0)} N·m` : S.spinning ? `LOOSE! turned ${fmt(S.turns, 1)} turns` : `Bolt needs ${fmt(T, 0)} N·m to break loose`, cx, by + 24, S.spinning && !hide ? COL.react : COL.muted, { size: 12, bold: true, align: 'center' });
+    }
+
+    hs = [{ key: 'tip', x: tipB.x, y: tipB.y, r: 13 }, { key: 'grip', x: gp.x, y: gp.y, r: 15 }];
+    if (!app.locked) { handleDot(g, tipB.x, tipB.y, COL.force, drag === 'tip'); }
+  }
+
+  const toBar = (x, y) => {           // screen point -> wrench frame
+    const wx = V.ix(x) - PIV.x, wy = V.iy(y) - PIV.y, c = Math.cos(S.theta), s = Math.sin(S.theta);
+    return { x: wx * c + wy * s, y: -wx * s + wy * c };
+  };
+  function move(x, y) {
+    if (drag === 'grip') S.r = clamp(snapv(toBar(x, y).x, 0.5), 0.5, 5.5);
+    else if (drag === 'tip') {
+      const p = toBar(x, y), vx = (p.x - S.r) / K, vy = p.y / K;
+      let F = Math.min(100, Math.hypot(vx, vy)), phi = Math.atan2(vy, vx);
+      if (app.snap) { F = Math.round(F / 5) * 5; phi = Math.round(phi / (5 * D2R)) * 5 * D2R; }
+      S.F = F; S.phi = phi;
+    }
+  }
+
+  function equations() {
+    const m = calc(), perp = S.F * Math.sin(S.phi), par = S.F * Math.cos(S.phi), pd = phiDeg();
+    const setup =
+      ROW('Where you grip', `${I('r')} = ${fmt(S.r, 1)} m from the bolt`) +
+      ROW('Your push', `${I('F')} = ${fmt(S.F, 0)} N, at ${I('φ')} = ${pd}° to the wrench`) +
+      (S.tight > 0 ? ROW('The bolt', `breaks loose at ${SB('M', 'needed')} = ${fmt(S.tight, 0)} N·m`) : '');
+    const eff = Math.abs(Math.sin(S.phi)), best = S.r * S.F;
+    let sol =
+      ROW('1 · Split the push', `${SB('F', '⊥')} = ${I('F')} sin ${I('φ')} = ${fmt(S.F, 0)} sin(${pd}°) = ${RES(fmt(Math.abs(perp), 1) + ' N')} <span style="font-size:.8em;color:var(--muted)">(this part twists)</span><br>` +
+        `${SB('F', '∥')} = ${I('F')} cos ${I('φ')} = ${fmt(Math.abs(par), 1)} N <span style="font-size:.8em;color:var(--muted)">(pulls along the bar: no twist)</span>`) +
+      ROW('2 · Twist = distance × twisting force', `${I('M')} = ${I('r')}·${SB('F', '⊥')} = (${fmt(S.r, 1)} m)(${fmt(Math.abs(perp), 1)} N) = ${RES(fmt(Math.abs(m.M), 1) + ' N·m')} ${Math.abs(m.M) < 0.05 ? '' : m.M > 0 ? '↺' : '↻'}`) +
+      ROW('Same thing, one formula', `${I('M')} = ${I('r')} ${I('F')} sin ${I('φ')}, so twist grows with <b>r</b>, with <b>F</b>, and with <b>sin φ</b> (largest at 90°).`, 'note') +
+      ROW('How much of your effort works?', `sin ${I('φ')} = ${fmt(eff * 100, 0)}%. &nbsp;Best possible with this ${I('r')} and ${I('F')}: ${I('r')}${I('F')} = ${fmt(best, 0)} N·m.`);
+    if (S.tight > 0) {
+      const need = S.tight / S.r;
+      sol += ROW('Will the bolt move?', Math.abs(m.M) >= S.tight
+        ? `<span class="ok">Yes: ${fmt(Math.abs(m.M), 0)} ≥ ${fmt(S.tight, 0)} N·m.</span>`
+        : `<span class="bad">No: ${fmt(Math.abs(m.M), 0)} &lt; ${fmt(S.tight, 0)} N·m.</span> At this grip you would need ${I('F')}<sub>⊥</sub> = ${SB('M', 'needed')}/${I('r')} = ${fmt(need, 1)} N, or grip at ${I('r')} = ${fmt(S.tight / Math.max(Math.abs(perp), 1e-9), 1)} m with this push.`);
+    }
+    return { setup, solution: sol };
+  }
+
+  const challenges = [
+    { name: 'Break it loose', make() {
+      reset();
+      const Fmax = rnd([40, 50, 60]), T = Math.round(Fmax * rnd([2.5, 3, 3.5, 4]) / 10) * 10;
+      S.tight = T; S.r = 1; S.F = Fmax; S.phi = 90 * D2R;
+      return { kind: 'target',
+        prompt: `The bolt needs <b>${T} N·m</b> to break loose, but you can push with at most <b>${Fmax} N</b>. Where do you grip the wrench?`,
+        hint: `Twist = r × F⊥. With F at its limit, you need r ≥ ${T} / ${Fmax} = ${fmt(T / Fmax, 1)} m, and push straight across the bar (φ = 90°).`,
+        ok: () => Math.abs(calc().M) >= S.tight && S.F <= Fmax + 1e-9,
+        status: () => `M = ${fmt(Math.abs(calc().M), 0)} N·m of ${T} needed · F = ${fmt(S.F, 0)} N (limit ${Fmax})` };
+    } },
+    { name: 'Wasted effort', make() {
+      reset(); S.tight = 0; S.F = 60; S.phi = 90 * D2R;
+      return { kind: 'target',
+        prompt: `Push with <b>at least 50 N</b> but produce <b>no twist at all</b>. Which direction does that take?`,
+        hint: `Only the component perpendicular to the bar twists it. F⊥ = F sin φ is zero when φ = 0° or 180°: pushing straight along the bar.`,
+        ok: () => S.F >= 50 && Math.abs(Math.sin(S.phi)) <= 0.05,
+        status: () => `F = ${fmt(S.F, 0)} N, twist M = ${fmt(calc().M, 1)} N·m` };
+    } },
+    { name: 'Compute the twist', make() {
+      reset(); S.tight = 0; S.r = rnd([1.5, 2, 2.5, 3, 4, 5]); S.F = rnd([20, 30, 40, 50, 60, 80]); S.phi = rnd([30, 45, 60, 90, 120, 150]) * D2R;
+      return { kind: 'answer', unit: 'N·m',
+        prompt: `The wrench is pushed as shown (values under <i>Given</i>). Calculate the <b>twisting moment M</b> about the bolt, in N·m.`,
+        hint: `M = r F sin φ. Or split the force first: M = r × F⊥ where F⊥ = F sin φ.`,
+        answer: () => calc().M, tolAbs: 0.5, tolRel: 0.01 };
+    } }
+  ];
+
+  return {
+    id: 'feel', title: 'Feel it',
+    blurb: `<h2>What is a moment?</h2><p>A moment (torque) is a force's <b>twisting effect</b> about a point: the reason a wrench turns a bolt, a door swings on its hinge, or a seesaw tips. It depends on <b>how hard</b> you push, <b>how far</b> from the pivot, and <b>which way</b> you push.</p>
+    <ul><li>Slide your grip outward along the wrench: same push, bigger twist (a “cheater pipe”).</li><li>Rotate the push toward the bar's own direction: the twist fades to zero, because that part of the force only pulls on the bolt.</li><li>Raise the bolt tightness and find the cheapest way to break it loose.</li></ul>`,
+    hint: 'Drag the orange grip along the wrench · drag the arrow tip to aim your push',
+    controls: [
+      { id: 'F', label: 'Push F', min: 0, max: 100, step: 5, unit: 'N', get: () => S.F, set: v => S.F = v },
+      { id: 'phi', label: 'Push angle φ', min: -180, max: 180, step: 5, unit: '°', get: phiDeg, set: v => S.phi = v * D2R },
+      { id: 'r', label: 'Grip distance r', min: 0.5, max: 5.5, step: 0.5, unit: 'm', dec: 1, get: () => S.r, set: v => S.r = v },
+      { id: 'tight', label: 'Bolt tightness', min: 0, max: 300, step: 10, off: () => ch.mode === 'challenge', get: () => S.tight, set: v => S.tight = v, fmt: v => v === 0 ? 'no bolt' : v + ' N·m' },
+      { id: 'perp', type: 'button', label: 'Push across (90°)', onClick: () => S.phi = 90 * D2R },
+      { id: 'along', type: 'button', label: 'Push along bar (0°)', onClick: () => S.phi = 0 },
+      { id: 'parts', type: 'toggle', label: 'Show F⊥ / F∥', get: () => S.parts, set: v => S.parts = v, free: true },
+      { id: 'snap', type: 'toggle', label: 'Snap', get: () => app.snap, set: v => app.snap = v, free: true },
+      { id: 'rst', type: 'button', label: 'Reset', onClick: reset }
+    ],
+    reset, draw, equations, challenges, step,
+    down(x, y) { if (app.locked) return false; const h = hit(hs, x, y); if (!h) return false; drag = h.key; move(x, y); return true; },
+    move(x, y) { if (drag) move(x, y); },
+    up() { drag = null; },
+    hover(x, y) { return !app.locked && hit(hs, x, y) ? 'grab' : 'default'; }
+  };
+})();
+
+/* =====================================================================
+   MODULE 1 — Moment about a point
+   ===================================================================== */
+const MomentMod = (() => {
+  const S = {};
+  const K = 0.035;                 // world metres of arrow per newton
+  let V, hs = [], drag = null;
+
+  function reset() {
+    S.O = { x: -2, y: -1 }; S.P = { x: 2, y: 1 }; S.F = { x: 20, y: -30 };
+    S.comp = false;
+  }
+  reset();
+  const calc = () => momentCalc(S.O, S.P, S.F);
+
+  function draw(g, w, h) {
+    V = makeView(w, h, 15, 9.5);
+    drawGrid(g, V, w, h);
+    const m = calc(), { O, P, F } = S;
+    const ox = V.X(O.x), oy = V.Y(O.y), px = V.X(P.x), py = V.Y(P.y);
+    const tip = { x: P.x + F.x * K, y: P.y + F.y * K };
+    const tx = V.X(tip.x), ty = V.Y(tip.y);
+    const hide = app.hideSolution;
+
+    // line of action + moment arm
+    if (m.Fl > 1e-6) {
+      const u = v2.unit(F);
+      line(g, V.X(P.x - u.x * 30), V.Y(P.y - u.y * 30), V.X(P.x + u.x * 30), V.Y(P.y + u.y * 30), COL.force, 1.2, [6, 5]);
+      const t = v2.dot(v2.sub(O, P), u);
+      const foot = { x: P.x + u.x * t, y: P.y + u.y * t };
+      const fx = V.X(foot.x), fy = V.Y(foot.y);
+      if (m.arm > 0.05 && !hide) {
+        line(g, ox, oy, fx, fy, COL.accent, 2, [5, 4]);
+        // right-angle mark
+        const a = v2.unit(v2.sub(O, foot)), b = u, s = 0.22;
+        const c1 = { x: foot.x + a.x * s, y: foot.y + a.y * s }, c2 = { x: c1.x + b.x * s, y: c1.y + b.y * s }, c3 = { x: foot.x + b.x * s, y: foot.y + b.y * s };
+        g.save(); g.strokeStyle = COL.accent; g.lineWidth = 1.5; g.beginPath();
+        g.moveTo(V.X(c1.x), V.Y(c1.y)); g.lineTo(V.X(c2.x), V.Y(c2.y)); g.lineTo(V.X(c3.x), V.Y(c3.y)); g.stroke(); g.restore();
+        text(g, 'd', (ox + fx) / 2 + 9, (oy + fy) / 2 - 9, COL.accent, { bold: true, size: 15 });
+      }
+    }
+    // position vector r
+    arrow(g, ox, oy, px, py, COL.muted, 2, 9);
+    text(g, 'r', (ox + px) / 2 - 8, (py + oy) / 2 - 12, COL.muted, { bold: true, size: 14 });
+
+    // angle theta between r and F at P
+    if (m.rl > 0.05 && m.Fl > 1e-6 && !hide) {
+      const ar = Math.atan2(m.r.y, m.r.x), af = Math.atan2(F.y, F.x);
+      const ext = { x: P.x + Math.cos(ar) * 1.4, y: P.y + Math.sin(ar) * 1.4 };
+      line(g, px, py, V.X(ext.x), V.Y(ext.y), COL.muted, 1.2, [3, 3]);
+      arcW(g, px, py, 0.9 * V.s, ar, ar + wrapPi(af - ar), COL.muted, 1.5);
+      const mid = ar + wrapPi(af - ar) / 2;
+      const off = Math.abs(m.theta) < 0.35 ? 18 * -Math.sign(m.theta || 1) : 0;   // nudge the label off the arrows when θ is tiny
+      text(g, `θ = ${fmt(m.theta / D2R, 0)}°`, px + Math.cos(mid) * 1.5 * V.s, py - Math.sin(mid) * 1.5 * V.s + off, COL.muted, { size: 12 });
+    }
+    // components (Varignon)
+    if (S.comp && m.Fl > 1e-6) {
+      arrow(g, px, py, V.X(P.x + F.x * K), py, COL.force, 2, 8, [4, 3]);
+      arrow(g, px, py, px, V.Y(P.y + F.y * K), COL.force, 2, 8, [4, 3]);
+      text(g, `Fx = ${fmt(F.x, 0)}`, V.X(P.x + F.x * K / 2), py + (F.y > 0 ? 16 : -16), COL.force, { size: 12 });
+      text(g, `Fy = ${fmt(F.y, 0)}`, px + (F.x > 0 ? -8 : 8), V.Y(P.y + F.y * K / 2), COL.force, { size: 12, align: F.x > 0 ? 'right' : 'left' });
+      if (!hide) {
+        text(g, `${sfmt(m.Mx, 0)} N·m`, V.X(P.x + F.x * K / 2), py + (F.y > 0 ? 32 : -32), COL.moment, { size: 12, bold: true });
+        text(g, `${sfmt(m.My, 0)} N·m`, px + (F.x > 0 ? -8 : 8), V.Y(P.y + F.y * K / 2) + 15, COL.moment, { size: 12, bold: true, align: F.x > 0 ? 'right' : 'left' });
+      }
+    }
+    // force arrow
+    arrow(g, px, py, tx, ty, COL.force, 4, 14);
+    text(g, `F = ${fmt(m.Fl, 0)} N`, tx + 12, ty - 12, COL.force, { bold: true, size: 14 });
+
+    // moment arc
+    if (Math.abs(m.M) > 0.05 && !hide) {
+      const R = (0.7 + Math.min(Math.abs(m.M), 200) / 200 * 0.8) * V.s;
+      const s0 = 30 * D2R, s1 = 270 * D2R, ccw = m.M > 0;
+      const a0 = ccw ? s0 : s1, a1 = ccw ? s1 : s0;
+      arcW(g, ox, oy, R, a0, a1, COL.moment, 4);
+      const ex = ox + Math.cos(a1) * R, ey = oy - Math.sin(a1) * R;
+      const tdx = ccw ? -Math.sin(a1) : Math.sin(a1), tdy = -(ccw ? Math.cos(a1) : -Math.cos(a1));
+      arrow(g, ex - tdx * 2, ey - tdy * 2, ex + tdx * 10, ey + tdy * 10, COL.moment, 3, 12);
+    }
+    if (!hide) text(g, `M_O = ${sfmt(m.M, 1)} N·m ${Math.abs(m.M) < 0.05 ? '' : m.M > 0 ? '(CCW)' : '(CW)'}   ·   d = ${fmt(m.arm, 2)} m`, ox, oy + 1.5 * V.s + 26, COL.moment, { bold: true, size: 14, align: 'center' });
+    else text(g, 'M_O = ?', ox, oy + 30, COL.moment, { bold: true, size: 14, align: 'center' });
+
+    // pivot + handles
+    disc(g, ox, oy, 6, COL.ink);
+    text(g, 'O', ox - 14, oy + 14, COL.ink, { bold: true });
+    text(g, 'A', px + 10, py + 16, COL.force, { bold: true });
+    hs = [
+      { key: 'tip', x: tx, y: ty, r: 12 },
+      { key: 'P', x: px, y: py, r: 12 },
+      { key: 'O', x: ox, y: oy, r: 12 }
+    ];
+    if (!app.locked) {
+      handleDot(g, ox, oy, COL.ink, drag === 'O');
+      handleDot(g, px, py, COL.force, drag === 'P');
+      handleDot(g, tx, ty, COL.force, drag === 'tip');
+    }
+  }
+
+  function toWorld(x, y) { return { x: clamp(V.ix(x), -6.8, 6.8), y: clamp(V.iy(y), -4.3, 4.3) }; }
+  function move(x, y) {
+    const wp = toWorld(x, y);
+    if (drag === 'O') S.O = { x: snapv(wp.x, 0.5), y: snapv(wp.y, 0.5) };
+    else if (drag === 'P') S.P = { x: snapv(wp.x, 0.5), y: snapv(wp.y, 0.5) };
+    else if (drag === 'tip') {
+      let Fx = (wp.x - S.P.x) / K, Fy = (wp.y - S.P.y) / K;
+      const l = Math.hypot(Fx, Fy);
+      if (l > 100) { Fx *= 100 / l; Fy *= 100 / l; }
+      S.F = { x: snapv(Fx, 5) + 0, y: snapv(Fy, 5) + 0 };
+      const l2 = Math.hypot(S.F.x, S.F.y);
+      if (l2 > 100) { S.F.x *= 100 / l2; S.F.y *= 100 / l2; }
+    }
+  }
+
+  const Fmag = () => Math.hypot(S.F.x, S.F.y);
+  const Fang = () => { let a = Math.atan2(S.F.y, S.F.x) / D2R; if (a < 0) a += 360; return Math.round(a); };
+  const setPolar = (mag, ang) => { S.F = { x: mag * Math.cos(ang * D2R), y: mag * Math.sin(ang * D2R) }; };
+
+  function equations() {
+    const m = calc(), F = S.F;
+    const setup =
+      ROW('Position vector', `${I('r')} = ${I('A')} − ${I('O')} = (${fmt(m.r.x)}, ${fmt(m.r.y)}) m, &nbsp; |${I('r')}| = ${fmt(m.rl, 2)} m`) +
+      ROW('Force', `${I('F')} = (${fmt(F.x, 0)}, ${fmt(F.y, 0)}) N, &nbsp; ${I('F')} = ${fmt(m.Fl)} N`);
+    const sense = Math.abs(m.M) < 0.05 ? 'Zero: the line of action passes through O.' :
+      m.M > 0 ? 'Counter-clockwise ↺ (+<i>k</i>̂)' : 'Clockwise ↻ (−<i>k</i>̂)';
+    const solution =
+      ROW('1 · Force × moment arm', `|${SB('M', 'O')}| = ${I('F')}·${I('d')} = (${fmt(m.Fl)} N)(${fmt(m.arm, 2)} m) = ${RES(fmt(Math.abs(m.M)) + ' N·m')}`) +
+      ROW('2 · With the angle between r and F', `${SB('M', 'O')} = ${I('r')}${I('F')} sin ${I('θ')} = (${fmt(m.rl, 2)})(${fmt(m.Fl)}) sin(${fmt(m.theta / D2R, 1)}°) = ${RES(fmt(m.M) + ' N·m')}`) +
+      ROW('3 · Cross product (components)', `${SB('M', 'O')} = ${SB('r', 'x')}${SB('F', 'y')} − ${SB('r', 'y')}${SB('F', 'x')} = (${fmt(m.r.x)})(${fmt(F.y, 0)}) − (${fmt(m.r.y)})(${fmt(F.x, 0)}) = ${fmt(m.My)} − (${fmt(-m.Mx)}) = ${RES(fmt(m.M) + ' N·m')}`) +
+      ROW('Sense', sense, '');
+    return { setup, solution };
+  }
+
+  const rndSign = () => Math.random() < 0.5 ? -1 : 1;
+  const challenges = [
+    { name: 'Hit the target moment', make() {
+      reset(); S.comp = false;
+      const target = rndSign() * rnd([20, 30, 40, 50, 60, 80]);
+      return { kind: 'target',
+        prompt: `Adjust the force (drag its tip or use the sliders) so that the moment about O is <b>${sfmt(target, 0)} N·m</b> (positive = counter-clockwise).`,
+        hint: `M<sub>O</sub> = r<sub>x</sub>F<sub>y</sub> − r<sub>y</sub>F<sub>x</sub>. Try a force perpendicular to r: then M = r·F, so F = M / r.`,
+        ok: () => Math.abs(calc().M - target) <= 2.5,
+        status: () => `M_O = ${fmt(calc().M)} N·m  (target ${sfmt(target, 0)} ± 2.5)` };
+    } },
+    { name: 'Zero moment', make() {
+      reset();
+      return { kind: 'target',
+        prompt: `Make the moment about O <b>zero</b> while keeping the force at least <b>50 N</b>. Where must the line of action go?`,
+        hint: `M = F·d. With F ≠ 0, the moment vanishes only if the arm d = 0, i.e. the line of action passes through O (F parallel to r).`,
+        ok: () => { const m = calc(); return Math.abs(m.M) <= 1.5 && m.Fl >= 50; },
+        status: () => `M_O = ${fmt(calc().M)} N·m, F = ${fmt(calc().Fl, 0)} N` };
+    } },
+    { name: 'Compute it', make() {
+      reset();
+      S.O = { x: -2, y: -1 };
+      do {   // avoid a trivial zero-moment question
+        const r = { x: rnd([-4, -3, -2, 2, 3, 4, 5]), y: rnd([-2, -1, 1, 2, 3]) };
+        S.P = { x: S.O.x + r.x, y: S.O.y + r.y };
+        S.F = { x: rnd([-40, -30, -20, 20, 30, 40, 50]), y: rnd([-40, -30, -20, 20, 30, 40, 50]) };
+      } while (Math.abs(calc().M) < 10);
+      return { kind: 'answer', unit: 'N·m',
+        prompt: `Calculate the moment of <b>F</b> about O (see the given values below). Enter <b>M<sub>O</sub></b> in N·m, counter-clockwise positive.`,
+        hint: `M<sub>O</sub> = r<sub>x</sub>F<sub>y</sub> − r<sub>y</sub>F<sub>x</sub>. Watch the signs of each component.`,
+        answer: () => calc().M, tolAbs: 1, tolRel: 0.01 };
+    } }
+  ];
+
+  return {
+    id: 'moment', title: 'Moment (vectors)',
+    blurb: `<h2>Moment about a point</h2><p>A force <b>F</b> applied at <b>A</b> tends to rotate the body about a pivot <b>O</b>. Its strength is the moment <i>M</i><sub>O</sub> = <i>F d</i>, where <i>d</i> is the perpendicular distance from O to the line of action.</p>
+    <ul><li>Slide A along the dashed line of action: M never changes (transmissibility).</li><li>Rotate F to point straight at O: M drops to zero.</li><li>Switch on components to see Varignon's theorem: M = M(F<sub>x</sub>) + M(F<sub>y</sub>).</li></ul>`,
+    hint: 'Drag O, A, or the arrow tip',
+    controls: [
+      { id: 'mag', label: 'Force |F|', min: 0, max: 100, step: 1, unit: 'N', get: Fmag, set: v => setPolar(v, Fang()) },
+      { id: 'ang', label: 'Direction', min: 0, max: 359, step: 1, unit: '°', get: Fang, set: v => setPolar(Fmag(), v) },
+      { id: 'comp', type: 'toggle', label: 'Show components (Varignon)', get: () => S.comp, set: v => S.comp = v, free: true },
+      { id: 'snap', type: 'toggle', label: 'Snap to grid', get: () => app.snap, set: v => app.snap = v, free: true },
+      { id: 'rst', type: 'button', label: 'Reset', onClick: reset }
+    ],
+    reset, draw, equations, challenges,
+    down(x, y) { if (app.locked) return false; const h = hit(hs, x, y); if (!h) return false; drag = h.key; move(x, y); return true; },
+    move(x, y) { if (drag) move(x, y); },
+    up() { drag = null; },
+    hover(x, y) { return !app.locked && hit(hs, x, y) ? 'grab' : 'default'; }
+  };
+})();
+
+/* =====================================================================
+   MODULE 2 — Beam equilibrium
+   ===================================================================== */
+const BeamMod = (() => {
+  const C = { type: 'ss', L: 10, xa: 0, xb: 10, pts: [], udl: { on: false, a: 2, b: 6, w: 10 } };
+  let sel = 0, drag = null, hs = [], probe = null, G = null;
+
+  function reset() {
+    C.type = 'ss'; C.L = 10; C.xa = 0; C.xb = 10;
+    C.pts = [{ x: 3, P: 40 }, { x: 7, P: 20 }];
+    C.udl = { on: false, a: 2, b: 6, w: 10 };
+    sel = 0; probe = null;
+  }
+  reset();
+  const R = () => beamSolve(C);
+  const sub = i => String(i + 1);
+
+  function geom(w, h) {
+    const ML = 64, MR = 64, ppm = (w - ML - MR) / C.L;
+    return { ML, ppm, y0: h * 0.27, X: x => ML + x * ppm, ix: px => (px - ML) / ppm,
+      pv: { t: h * 0.53, b: h * 0.74 }, pm: { t: h * 0.78, b: h * 0.985 } };
+  }
+
+  function support(g, x, y, kind) {
+    g.save(); g.strokeStyle = COL.ink; g.fillStyle = COL.panel; g.lineWidth = 2;
+    if (kind === 'pin') {
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - 13, y + 22); g.lineTo(x + 13, y + 22); g.closePath(); g.fill(); g.stroke();
+      line(g, x - 20, y + 22, x + 20, y + 22, COL.ink, 2);
+      for (let i = -18; i <= 14; i += 8) line(g, x + i, y + 22, x + i - 6, y + 29, COL.muted, 1.5);
+    } else {
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x - 11, y + 17); g.lineTo(x + 11, y + 17); g.closePath(); g.fill(); g.stroke();
+      disc(g, x - 6, y + 21, 3.5, COL.panel, COL.ink, 1.5); disc(g, x + 6, y + 21, 3.5, COL.panel, COL.ink, 1.5);
+      line(g, x - 20, y + 25, x + 20, y + 25, COL.ink, 2);
+    }
+    g.restore();
+  }
+
+  function plot(g, Gm, reg, X, Y, color, title, unit) {
+    const { t, b } = reg, mid = (t + b) / 2, half = (b - t) / 2 - 8;
+    const mx = Math.max(1e-9, ...Y.map(Math.abs));
+    const sy = v => mid - v / mx * half;
+    line(g, Gm.ML, mid, Gm.ML + C.L * Gm.ppm, mid, COL.muted, 1);
+    g.save(); g.beginPath(); g.moveTo(Gm.X(X[0]), mid);
+    for (let i = 0; i < X.length; i++) g.lineTo(Gm.X(X[i]), sy(Y[i]));
+    g.lineTo(Gm.X(X[X.length - 1]), mid); g.closePath();
+    g.globalAlpha = 0.16; g.fillStyle = color; g.fill(); g.restore();
+    g.save(); g.beginPath();
+    for (let i = 0; i < X.length; i++) i ? g.lineTo(Gm.X(X[i]), sy(Y[i])) : g.moveTo(Gm.X(X[i]), sy(Y[i]));
+    g.strokeStyle = color; g.lineWidth = 2.2; g.lineJoin = 'round'; g.stroke(); g.restore();
+    text(g, title, 8, t + 8, color, { bold: true, size: 12, halo: false });
+    text(g, unit, 8, t + 22, COL.muted, { size: 11, halo: false });
+    // label the extremes
+    const mark = i => { text(g, fmt(Y[i]), Gm.X(X[i]), sy(Y[i]) + (Y[i] >= 0 ? -10 : 11), color, { size: 11.5, bold: true, align: 'center' }); };
+    let iMax = 0, iMin = 0;
+    Y.forEach((v, i) => { if (v > Y[iMax]) iMax = i; if (v < Y[iMin]) iMin = i; });
+    if (Math.abs(Y[iMax]) > 1e-6 * mx && Math.abs(Y[iMax]) > 0.01) mark(iMax);
+    if (iMin !== iMax && Math.abs(Y[iMin]) > 0.01) mark(iMin);
+    return { sy, mid };
+  }
+
+  function draw(g, w, h) {
+    const Gm = G = geom(w, h), r = R();
+    const y0 = Gm.y0, bx0 = Gm.X(0), bx1 = Gm.X(C.L);
+    const maxF = Math.max(60, ...C.pts.map(p => p.P), r.Ay, r.By);
+    const flen = F => 16 + Math.abs(F) / maxF * 58;
+    hs = [];
+
+    // guide lines through plots
+    const evs = new Set([0, C.L]);
+    C.pts.forEach(p => evs.add(p.x));
+    if (C.type === 'ss') { evs.add(C.xa); evs.add(C.xb); }
+    if (C.udl.on) { evs.add(C.udl.a); evs.add(C.udl.b); }
+    for (const e of evs) line(g, Gm.X(e), y0 + 40, Gm.X(e), h, COL.grid, 1, [2, 4]);
+
+    // beam
+    g.save(); g.fillStyle = COL.ink; g.globalAlpha = 0.9; g.fillRect(bx0, y0 - 6, bx1 - bx0, 12); g.restore();
+
+    // supports & reactions
+    const hide = app.hideSolution;
+    const rx = (x, F, label) => {
+      const px = Gm.X(x), top = y0 + 6 + 36;
+      if (hide) {
+        arrow(g, px, top + 44, px, top, COL.react, 3, 12, [5, 4]);
+        text(g, `${label} = ?`, px + (x < C.L / 2 ? 14 : -14), C.type === 'cant' ? top + 58 : top + 26, COL.react, { bold: true, size: 13, align: x < C.L / 2 ? 'left' : 'right' });
+        return;
+      }
+      if (Math.abs(F) > 0.01) arrow(g, px, top + flen(F), px, top, COL.react, 3.5, 12);
+      const ly = C.type === 'cant' ? top + flen(F) + 14 : top + flen(F) / 2 + 4;   // wall: keep clear of the M_A arc
+      text(g, `${label} = ${fmt(F)} N`, px + (x < C.L / 2 ? 14 : -14), ly, COL.react, { bold: true, size: 13, align: x < C.L / 2 ? 'left' : 'right' });
+    };
+    if (C.type === 'ss') {
+      support(g, Gm.X(C.xa), y0 + 6, 'pin'); support(g, Gm.X(C.xb), y0 + 6, 'roller');
+      text(g, 'A', Gm.X(C.xa), y0 + 6 - 20, COL.ink, { bold: true, align: 'center' });
+      text(g, 'B', Gm.X(C.xb), y0 + 6 - 20, COL.ink, { bold: true, align: 'center' });
+      rx(C.xa, r.Ay, 'A_y'); rx(C.xb, r.By, 'B_y');
+      hs.push({ key: 'sa', x: Gm.X(C.xa), y: y0 + 20, r: 16 }, { key: 'sb', x: Gm.X(C.xb), y: y0 + 20, r: 16 });
+    } else {
+      g.save(); g.fillStyle = COL.ink; g.globalAlpha = 0.9; g.fillRect(bx0 - 10, y0 - 46, 10, 92); g.restore();
+      for (let i = -44; i < 46; i += 9) line(g, bx0 - 10, y0 + i, bx0 - 22, y0 + i + 9, COL.muted, 1.5);
+      text(g, 'A', bx0 - 16, y0 - 56, COL.ink, { bold: true, align: 'center' });
+      rx(0, r.Ay, 'A_y');
+      // reaction moment arc (CCW)
+      const cx = bx0 + 30, cy = y0 + 6 + 62, rad = 20;
+      g.save(); g.strokeStyle = COL.moment; g.lineWidth = 3.5; g.setLineDash(hide ? [5, 4] : []); g.beginPath(); g.arc(cx, cy, rad, -Math.PI * 0.15, Math.PI * 1.1, true); g.stroke(); g.restore();
+      arrow(g, cx + rad * Math.cos(Math.PI * 1.1) + 3, cy + rad * Math.sin(Math.PI * 1.1) - 2, cx + rad * Math.cos(Math.PI * 1.1) - 1, cy + rad * Math.sin(Math.PI * 1.1) + 8, COL.moment, 3, 11);
+      text(g, `M_A = ${hide ? '?' : fmt(r.MA) + ' N·m'}`, cx + 28, cy + 4, COL.moment, { bold: true, size: 13 });
+    }
+
+    // UDL
+    if (C.udl.on) {
+      const { a, b, w: uw } = C.udl, hh = 14 + Math.min(uw, 50) / 50 * 38, xa = Gm.X(a), xb = Gm.X(b), top = y0 - 8 - hh;
+      g.save(); g.globalAlpha = 0.14; g.fillStyle = COL.force; g.fillRect(xa, top, xb - xa, hh); g.restore();
+      line(g, xa, top, xb, top, COL.force, 2);
+      for (let x = xa; x <= xb + 0.5; x += 18) arrow(g, x, top, x, y0 - 8, COL.force, 1.6, 7);
+      text(g, `w = ${fmt(uw, 0)} N/m`, (xa + xb) / 2, top - 28, COL.force, { bold: true, size: 13, align: 'center' });
+      // resultant
+      const xc = Gm.X((a + b) / 2), Wu = uw * (b - a);
+      arrow(g, xc, top - 22, xc, y0 - 8, COL.force, 2.5, 10, [5, 4]);
+      text(g, `W = ${fmt(Wu, 0)} N`, xc + 8, top - 14, COL.force, { size: 12, bold: true });
+      hs.push({ key: 'ua', x: xa, y: top, r: 10 }, { key: 'ub', x: xb, y: top, r: 10 }, { key: 'um', x: xc, y: top + 8, r: 10 });
+      if (!app.locked) { handleDot(g, xa, top, COL.force, drag === 'ua'); handleDot(g, xb, top, COL.force, drag === 'ub'); }
+    }
+
+    // point loads
+    C.pts.forEach((p, i) => {
+      const px = Gm.X(p.x), len = flen(p.P), top = y0 - 8 - len, on = i === sel;
+      arrow(g, px, top, px, y0 - 8, COL.force, on ? 5 : 3.5, 13);
+      text(g, `${fmt(p.P, 0)} N`, px, top - 12, COL.force, { bold: true, size: 13, align: 'center' });
+      if (on) text(g, `x = ${fmt(p.x, 1)} m`, px, y0 + 22, COL.force, { size: 12, align: 'center' });
+      hs.push({ key: 'mag' + i, x: px, y: top, r: 9 }, { key: 'pos' + i, seg: [px, top, px, y0 - 8], r: 10 });
+      if (!app.locked) handleDot(g, px, top, COL.force, drag === 'mag' + i);
+      if (on && !app.locked) { g.save(); g.strokeStyle = COL.force; g.lineWidth = 1.5; g.setLineDash([3, 3]); g.strokeRect(px - 16, top - 24, 32, len + 32); g.restore(); }
+    });
+
+    // diagrams
+    if (hide) text(g, 'Shear and moment diagrams appear once you have answered.', w / 2, h * 0.72, COL.muted, { size: 13, align: 'center' });
+    else {
+      const D = beamDiagrams(C, r);
+      plot(g, Gm, Gm.pv, D.X, D.V, COL.tension, 'V (N)', '');
+      plot(g, Gm, Gm.pm, D.X, D.M, COL.moment, 'M (N·m)', 'sagging +');
+    }
+    // probe
+    if (probe != null && !hide) {
+      const px = Gm.X(probe), a = beamAt(C, r, probe, true);
+      line(g, px, Gm.pv.t, px, Gm.pm.b, COL.ink, 1, [4, 3]);
+      text(g, `x = ${fmt(probe, 2)} m   V = ${fmt(a.V)} N   M = ${fmt(a.M)} N·m`, clamp(px, 150, app.w - 150), Gm.pv.t - 6, COL.ink, { size: 12, bold: true, align: 'center' });
+    }
+    // beam dims
+    text(g, `L = ${fmt(C.L, 0)} m`, (bx0 + bx1) / 2, y0 + 4 + 82, COL.muted, { size: 12, align: 'center' });
+  }
+
+  function down(x, y) {
+    if (app.locked) return false;
+    const h = hit(hs, x, y);
+    if (!h) return false;
+    drag = h.key;
+    const m = /^(mag|pos)(\d+)$/.exec(h.key);
+    if (m) sel = +m[2];
+    if (drag.startsWith('pos')) dragOff = G.ix(x) - C.pts[sel].x;
+    if (drag === 'um') dragOff = G.ix(x) - (C.udl.a + C.udl.b) / 2;
+    return true;
+  }
+  let dragOff = 0;
+  function move(x, y) {
+    if (!drag) return;
+    const xm = G.ix(x), stepx = 0.5;
+    let m;
+    if ((m = /^pos(\d+)$/.exec(drag))) C.pts[+m[1]].x = clamp(snapv(xm - dragOff, stepx), 0, C.L);
+    else if ((m = /^mag(\d+)$/.exec(drag))) {
+      const len = (G.y0 - 8) - y, maxF = Math.max(60, ...C.pts.map(p => p.P), R().Ay, R().By);
+      C.pts[+m[1]].P = clamp(Math.round(((len - 16) / 58 * maxF) / 5) * 5, 5, 100);
+    }
+    else if (drag === 'sa') C.xa = clamp(snapv(xm, stepx), 0, C.xb - 1);
+    else if (drag === 'sb') C.xb = clamp(snapv(xm, stepx), C.xa + 1, C.L);
+    else if (drag === 'ua') C.udl.a = clamp(snapv(xm, stepx), 0, C.udl.b - 0.5);
+    else if (drag === 'ub') C.udl.b = clamp(snapv(xm, stepx), C.udl.a + 0.5, C.L);
+    else if (drag === 'um') {
+      const wd = C.udl.b - C.udl.a, na = clamp(snapv(xm - dragOff - wd / 2, stepx), 0, C.L - wd);
+      C.udl.a = na; C.udl.b = na + wd;
+    }
+  }
+
+  function hover(x, y) {
+    const inPlots = G && y > G.pv.t - 14 && G.ix(x) >= 0 && G.ix(x) <= C.L;
+    const np = inPlots ? clamp(G.ix(x), 0, C.L) : null;
+    if (np !== probe) { probe = np; app.dirty = true; }
+    if (inPlots) return 'crosshair';
+    return !app.locked && hit(hs, x, y) ? 'grab' : 'default';
+  }
+
+  function addLoad() {
+    if (C.pts.length >= 4) return;
+    const cand = [5, 2, 8, 3.5, 6.5, 1, 9];
+    const x = cand.find(c => C.pts.every(p => Math.abs(p.x - c) > 0.6)) ?? 5;
+    C.pts.push({ x, P: 30 }); sel = C.pts.length - 1;
+  }
+  function setType(t) {
+    C.type = t;
+    if (t === 'cant') C.xa = 0; else { C.xa = 0; C.xb = C.L; }
+  }
+  function setLength(v) {
+    const atEnd = C.xb >= C.L - 1e-9;
+    C.L = v;
+    C.xb = atEnd ? v : Math.min(C.xb, v);
+    C.xb = Math.max(C.xb, C.xa + 1);
+    C.pts.forEach(p => p.x = Math.min(p.x, v));
+    C.udl.b = Math.min(C.udl.b, v); C.udl.a = Math.min(C.udl.a, C.udl.b - 0.5);
+  }
+
+  function equations() {
+    const r = R(), lines = [];
+    const terms = [];
+    let setup = '';
+    C.pts.forEach((p, i) => { setup += `${SB('P', i + 1)} = ${fmt(p.P, 0)} N at ${I('x')}<sub>${i + 1}</sub> = ${fmt(p.x, 1)} m<br>`; });
+    if (!C.pts.length) setup += 'No point loads.<br>';
+    if (C.udl.on) setup += `${I('W')} = ${I('w')}(${I('b')} − ${I('a')}) = (${fmt(C.udl.w, 0)})(${fmt(C.udl.b - C.udl.a, 1)}) = ${fmt(r.Wu, 0)} N, acting at ${I('x̄')} = (${I('a')}+${I('b')})/2 = ${fmt(r.xc, 2)} m<br>`;
+    setup = ROW('Loads (↓)', setup) + ROW('Supports',
+      C.type === 'ss' ? `A: pin at ${I('x')} = ${fmt(C.xa, 1)} m (${SB('A', 'x')}, ${SB('A', 'y')}) · B: roller at ${I('x')} = ${fmt(C.xb, 1)} m (${SB('B', 'y')}) → 3 unknowns, 3 equations` :
+      `A: fixed wall at ${I('x')} = 0 (${SB('A', 'x')}, ${SB('A', 'y')}, ${SB('M', 'A')}) → 3 unknowns, 3 equations`);
+
+    const mt = C.pts.map(p => `(${fmt(p.P, 0)})(${fmt(p.x - r.xa, 1)})`);
+    if (C.udl.on) mt.push(`(${fmt(r.Wu, 0)})(${fmt(r.xc - r.xa, 2)})`);
+    const sumM = mt.length ? mt.join(' + ') : '0';
+    const sumP = C.pts.map(p => fmt(p.P, 0)).concat(C.udl.on ? [fmt(r.Wu, 0)] : []).join(' + ') || '0';
+    let sol = '';
+    if (C.type === 'ss') {
+      sol += ROW('ΣM<sub>A</sub> = 0   (↺ +)', `${SB('B', 'y')}(${fmt(C.xb - C.xa, 1)}) − [${sumM}] = 0 &nbsp;⟹&nbsp; ${SB('B', 'y')} = ${fmt(r.Mload, 1)} / ${fmt(r.span, 1)} = ${RES(fmt(r.By) + ' N ↑')}`);
+      sol += ROW('ΣF<sub>y</sub> = 0', `${SB('A', 'y')} + ${SB('B', 'y')} − (${sumP}) = 0 &nbsp;⟹&nbsp; ${SB('A', 'y')} = ${fmt(r.Pt + r.Wu, 0)} − ${fmt(r.By)} = ${RES(fmt(r.Ay) + ' N ↑')}`);
+      sol += ROW('ΣF<sub>x</sub> = 0', `${SB('A', 'x')} = ${RES('0')}`);
+      const chk = r.Ay * (C.xa - C.xb) + C.pts.reduce((s, p) => s + p.P * (p.x - C.xb), 0) + r.Wu * (r.xc - C.xb);
+      sol += ROW('Check: ΣM<sub>B</sub>', `−${SB('A', 'y')}(${fmt(C.xb - C.xa, 1)}) + Σ${I('P')}(${I('x')} − ${SB('x', 'B')}) = ${fmt(chk, 2)} ≈ 0 <span class="ok">✓</span>`);
+    } else {
+      sol += ROW('ΣF<sub>y</sub> = 0', `${SB('A', 'y')} − (${sumP}) = 0 &nbsp;⟹&nbsp; ${SB('A', 'y')} = ${RES(fmt(r.Ay) + ' N ↑')}`);
+      sol += ROW('ΣM<sub>A</sub> = 0   (↺ +)', `${SB('M', 'A')} − [${sumM}] = 0 &nbsp;⟹&nbsp; ${SB('M', 'A')} = ${RES(fmt(r.MA) + ' N·m ↺')}`);
+      sol += ROW('ΣF<sub>x</sub> = 0', `${SB('A', 'x')} = ${RES('0')}`);
+    }
+    const D = beamDiagrams(C, r);
+    const vmax = Math.max(...D.V.map(Math.abs)), mmax = Math.max(...D.M.map(Math.abs));
+    sol += ROW('Diagrams', `|${I('V')}|<sub>max</sub> = ${fmt(vmax)} N, &nbsp; |${I('M')}|<sub>max</sub> = ${fmt(mmax)} N·m. &nbsp; <span style="font-size:.85em;color:var(--muted)">(V jumps by each point load; M has its peak where V crosses zero.)</span>`);
+    return { setup, solution: sol };
+  }
+
+  const sample = (arr, k) => { const a = [...arr], out = []; while (k-- > 0 && a.length) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]); return out; };
+  const challenges = [
+    { name: 'Slide the load', make() {
+      reset(); C.pts = [{ x: 2, P: 40 }]; sel = 0;
+      const xt = rnd([3, 4, 5, 6, 7, 8]), target = 40 * xt / C.L;
+      return { kind: 'target',
+        prompt: `Slide the 40 N load along the beam so that the reaction at B is <b>${fmt(target, 0)} N</b>.`,
+        hint: `Take moments about A: B<sub>y</sub>·L = P·x, so x = B<sub>y</sub>·L / P.`,
+        ok: () => Math.abs(R().By - target) <= 0.75,
+        status: () => `B_y = ${fmt(R().By)} N  (target ${fmt(target, 0)} N)` };
+    } },
+    { name: 'Equal reactions', make() {
+      reset(); let cfg = null;
+      for (let t = 0; t < 300 && !cfg; t++) {
+        const P1 = rnd([20, 30, 40, 60]), P2 = rnd([20, 30, 40, 60]), x1 = rnd([1, 2, 3, 4, 5]);
+        const x2 = (5 * (P1 + P2) - P1 * x1) / P2;
+        if (x2 >= 0.5 && x2 <= 9.5 && Math.abs(x2 * 2 - Math.round(x2 * 2)) < 1e-9 && Math.abs(x2 - x1) > 0.4) cfg = { P1, P2, x1, x2 };
+      }
+      cfg = cfg || { P1: 40, P2: 40, x1: 2, x2: 8 };
+      const start = cfg.x2 === 5 ? 7 : 5;
+      C.pts = [{ x: cfg.x1, P: cfg.P1 }, { x: start === cfg.x1 ? 8 : start, P: cfg.P2 }]; sel = 1;
+      return { kind: 'target',
+        prompt: `Position the loads so both supports carry the same force: <b>A<sub>y</sub> = B<sub>y</sub></b>.`,
+        hint: `Equal reactions means the resultant of the loads acts at midspan: Σ P·x = (Σ P)·L/2.`,
+        ok: () => Math.abs(R().Ay - R().By) <= 0.75,
+        status: () => `A_y = ${fmt(R().Ay)} N, B_y = ${fmt(R().By)} N` };
+    } },
+    { name: 'Find B_y', make() {
+      reset(); C.udl.on = false;
+      const n = rnd([1, 2, 2]);
+      C.pts = sample([1, 2, 3, 4, 5, 6, 7, 8, 9], n).sort((a, b) => a - b).map(x => ({ x, P: rnd([10, 20, 30, 40, 50, 60]) }));
+      if (Math.random() < 0.5) { const a = rnd([1, 2, 3]); C.udl = { on: true, a, b: a + rnd([2, 3, 4, 5]), w: rnd([5, 10, 15, 20]) }; }
+      sel = 0;
+      return { kind: 'answer', unit: 'N',
+        prompt: `Find the vertical reaction at support <b>B</b> (roller) in newtons.`,
+        hint: `Sum moments about the pin A (which eliminates A<sub>x</sub> and A<sub>y</sub>). A UDL acts as a point force W = w·length at its centre.`,
+        answer: () => R().By, tolAbs: 0.5, tolRel: 0.01 };
+    } },
+    { name: 'Find M_A (cantilever)', make() {
+      reset(); setType('cant'); C.L = 8; C.udl.on = false;
+      C.pts = sample([1, 2, 3, 4, 5, 6, 7, 8], rnd([1, 2])).sort((a, b) => a - b).map(x => ({ x, P: rnd([10, 20, 30, 40, 50]) }));
+      if (Math.random() < 0.4) { const a = rnd([0, 1, 2]); C.udl = { on: true, a, b: a + rnd([2, 3, 4]), w: rnd([5, 10, 20]) }; }
+      sel = 0;
+      return { kind: 'answer', unit: 'N·m',
+        prompt: `The beam is fixed at the wall A. Find the <b>reaction moment M<sub>A</sub></b> (N·m, counter-clockwise positive).`,
+        hint: `ΣM<sub>A</sub> = 0: the wall moment must cancel the clockwise moments Σ P·x of the loads.`,
+        answer: () => R().MA, tolAbs: 0.5, tolRel: 0.01 };
+    } }
+  ];
+
+  return {
+    id: 'beam', title: 'Beam',
+    blurb: `<h2>Beam equilibrium</h2><p>A rigid beam is in equilibrium when <b>ΣF<sub>x</sub> = ΣF<sub>y</sub> = ΣM = 0</b>. The supports supply exactly the reactions needed. Move the loads and watch the reactions, shear and moment diagrams update.</p>
+    <ul><li>Drag a load along the beam, or drag its arrowhead up or down to change its size.</li><li>Move the pin toward a load: the roller's reaction shrinks.</li><li>Hover over the diagrams to read V and M at any point.</li></ul>`,
+    hint: 'Drag loads · drag arrowhead to resize · hover the diagrams',
+    controls: [
+      { id: 'type', type: 'seg', label: 'Beam', options: [['ss', 'Pin + roller'], ['cant', 'Cantilever']], get: () => C.type, set: setType },
+      { id: 'len', label: 'Length', min: 6, max: 12, step: 1, unit: 'm', get: () => C.L, set: setLength },
+      { id: 'sel', label: 'Selected load', min: 5, max: 100, step: 5, unit: 'N', show: () => C.pts.length > 0,
+        get: () => C.pts[sel] ? C.pts[sel].P : 5, set: v => { if (C.pts[sel]) C.pts[sel].P = v; } },
+      { id: 'w', label: 'Distributed w', min: 5, max: 50, step: 5, unit: 'N/m', show: () => C.udl.on, get: () => C.udl.w, set: v => C.udl.w = v },
+      { id: 'add', type: 'button', label: '+ Point load', onClick: addLoad },
+      { id: 'del', type: 'button', label: 'Remove selected', onClick: () => { if (C.pts.length) { C.pts.splice(sel, 1); sel = Math.max(0, sel - 1); } } },
+      { id: 'udl', type: 'toggle', label: 'Distributed load', get: () => C.udl.on, set: v => C.udl.on = v },
+      { id: 'snap', type: 'toggle', label: 'Snap', get: () => app.snap, set: v => app.snap = v, free: true },
+      { id: 'rst', type: 'button', label: 'Reset', onClick: reset }
+    ],
+    reset, draw, equations, challenges,
+    down, move, up() { drag = null; }, hover
+  };
+})();
+
+/* =====================================================================
+   MODULE 3 — 2D cable / particle equilibrium
+   ===================================================================== */
+const CableMod = (() => {
+  const S = {};
+  const FS = 0.018;                // world metres per newton
+  let V, hs = [], drag = null;
+
+  function reset() {
+    S.A = { x: -4, y: 3 }; S.B = { x: 3.5, y: 2.5 }; S.P = { x: 0, y: -0.5 };
+    S.W = 100; S.H = 0; S.angles = true; S.tri = true;
+  }
+  reset();
+  const solve = () => cable2D(S.A, S.B, S.P, S.W, S.H);
+  const angOf = u => Math.atan2(Math.abs(u.y), Math.abs(u.x)) / D2R;
+
+  function draw(g, w, h) {
+    V = makeView(w, h, 15, 9.5, 0, 0.3);
+    drawGrid(g, V, w, h);
+    const s = solve(), { A, B, P } = S;
+    const X = V.X, Y = V.Y, px = X(P.x), py = Y(P.y);
+    hs = [];
+    if (!s) return;
+    const hide = app.hideSolution;
+    const col = t => (!hide && (t < 0 || !s.ok)) ? COL.warn : COL.tension;
+
+    // ceiling anchors
+    [A, B].forEach((a, i) => {
+      const ax = X(a.x), ay = Y(a.y);
+      g.save(); g.fillStyle = COL.ink; g.globalAlpha = 0.9; g.fillRect(ax - 14, ay - 5, 28, 10); g.restore();
+      for (let k = -12; k <= 12; k += 6) line(g, ax + k, ay - 5, ax + k - 5, ay - 12, COL.muted, 1.4);
+      hs.push({ key: i ? 'B' : 'A', x: ax, y: ay, r: 14 });
+    });
+
+    // cables
+    [[A, s.T1, 0], [B, s.T2, 1]].forEach(([a, t, i]) => {
+      const bad = !hide && (!s.ok || t < 0);
+      line(g, X(a.x), Y(a.y), px, py, col(t), hide ? 3 : bad ? 2.5 : clamp(2 + Math.abs(t) / Math.max(S.W, 40) * 1.6, 2.5, 7), bad ? [7, 5] : null);
+    });
+
+    // angles
+    if (S.angles && s.ok) {
+      [[s.u1, 0], [s.u2, 1]].forEach(([u, i]) => {
+        const a0 = u.x >= 0 ? 0 : Math.PI, a1 = Math.atan2(u.y, u.x);
+        arcW(g, px, py, 34, a0, a0 + wrapPi(a1 - a0), COL.muted, 1.6);
+        line(g, px, py, px + (u.x >= 0 ? 78 : -78), py, COL.muted, 1, [3, 3]);
+        text(g, `${['α', 'β'][i]} = ${fmt(angOf(u), 1)}°`, px + (u.x >= 0 ? 44 : -44), py + 14, COL.muted, { size: 12, align: u.x >= 0 ? 'left' : 'right' });
+      });
+    }
+
+    // load arrows
+    const wl = S.W * FS * V.s, hl = S.H * FS * V.s;
+    if (S.W > 0) {
+      arrow(g, px, py, px, py + wl, COL.force, 4, 13);
+      g.save(); g.fillStyle = COL.force; g.globalAlpha = 0.16; g.fillRect(px - 22, py + wl, 44, 34); g.strokeStyle = COL.force; g.lineWidth = 2; g.strokeRect(px - 22, py + wl, 44, 34); g.restore();
+      text(g, `W = ${fmt(S.W, 0)} N`, px + 30, py + wl + 17, COL.force, { bold: true });
+    }
+    if (Math.abs(S.H) > 0) { arrow(g, px, py, px + hl, py, COL.force, 4, 13); text(g, `H = ${fmt(S.H, 0)} N`, px + hl / 2, py - 14, COL.force, { bold: true, align: 'center' }); }
+    // tension arrows at knot
+    if (s.ok && !hide) [[s.u1, s.T1, '₁', A], [s.u2, s.T2, '₂', B]].forEach(([u, t, n, a]) => {
+      const L = t * FS * V.s;
+      const cap = Math.min(Math.abs(L), 230) * Math.sign(L);
+      arrow(g, px, py, px + u.x * cap, py - u.y * cap, col(t), 3, 12);
+      // label sits on the cable, 62% of the way to its anchor
+      const lx = px + (X(a.x) - px) * 0.62, ly = py + (Y(a.y) - py) * 0.62;
+      text(g, `T${n} = ${fmt(t, 1)} N`, lx + (u.x >= 0 ? 12 : -12), ly - 6, col(t), { bold: true, size: 13, align: u.x >= 0 ? 'left' : 'right' });
+    });
+    if (hide) text(g, 'T₁ = ?   T₂ = ?', w / 2, 40, COL.tension, { bold: true, align: 'center' });
+    else if (s.ok && (s.T1 < 0 || s.T2 < 0)) text(g, 'Negative tension: a cable can only pull, so this geometry cannot hold.', w / 2, 40, COL.warn, { bold: true, align: 'center' });
+    else if (!s.ok || Math.abs(s.det) < 0.1) text(g, !s.ok ? 'Cables are collinear: no finite tension can balance the load.' : 'Cables nearly collinear: tensions become huge.', w / 2, 40, COL.warn, { bold: true, align: 'center' });
+
+    handleDot(g, px, py, COL.ink, drag === 'P');
+    hs.push({ key: 'P', x: px, y: py, r: 13 });
+    if (!app.locked) [A, B].forEach((a, i) => handleDot(g, X(a.x), Y(a.y), COL.ink, drag === (i ? 'B' : 'A')));
+
+    // force polygon
+    if (S.tri && s.ok && !hide) {
+      const vs = [{ x: 0, y: -S.W, c: COL.force, n: 'W' }];
+      if (Math.abs(S.H) > 0) vs.push({ x: S.H, y: 0, c: COL.force, n: 'H' });
+      vs.push({ x: s.u1.x * s.T1, y: s.u1.y * s.T1, c: col(s.T1), n: 'T₁' }, { x: s.u2.x * s.T2, y: s.u2.y * s.T2, c: col(s.T2), n: 'T₂' });
+      const pts = [{ x: 0, y: 0 }]; vs.forEach(v => pts.push({ x: pts[pts.length - 1].x + v.x, y: pts[pts.length - 1].y + v.y }));
+      const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+      const bw = Math.max(1, Math.max(...xs) - Math.min(...xs)), bh = Math.max(1, Math.max(...ys) - Math.min(...ys));
+      const bx = w - 200, by = h - 190, bW = 170, bH = 130;
+      const k = Math.min(bW / bw, bH / bh, 1.5);
+      const ox = bx + bW / 2 - (Math.max(...xs) + Math.min(...xs)) / 2 * k, oy = by + bH / 2 + (Math.max(...ys) + Math.min(...ys)) / 2 * k;
+      g.save(); g.fillStyle = COL.panel; g.globalAlpha = 0.85; g.fillRect(bx - 16, by - 32, bW + 32, bH + 52); g.strokeStyle = COL.line; g.strokeRect(bx - 16, by - 32, bW + 32, bH + 52); g.restore();
+      text(g, 'Force polygon (ΣF = 0 closes)', bx - 8, by - 18, COL.muted, { size: 11.5, bold: true, halo: false });
+      vs.forEach((v, i) => {
+        const a = pts[i], b = pts[i + 1];
+        arrow(g, ox + a.x * k, oy - a.y * k, ox + b.x * k, oy - b.y * k, v.c, 2.5, 9);
+        text(g, v.n, ox + (a.x + b.x) / 2 * k + 8, oy - (a.y + b.y) / 2 * k - 8, v.c, { size: 12, bold: true });
+      });
+    }
+  }
+
+  function move(x, y) {
+    const wp = { x: clamp(V.ix(x), -6.8, 6.8), y: clamp(V.iy(y), -3.8, 4.3) };
+    const q = { x: snapv(wp.x, 0.5), y: snapv(wp.y, 0.5) };
+    if (drag === 'A') S.A = q; else if (drag === 'B') S.B = q; else if (drag === 'P') S.P = q;
+  }
+
+  function equations() {
+    const s = solve();
+    if (!s) return { setup: ROW('Geometry', 'Cable length is zero.'), solution: '' };
+    const R = Math.hypot(S.H, S.W);
+    let setup =
+      ROW('Cable 1 (to A)', `${I('α')} = ${fmt(angOf(s.u1), 1)}° above horizontal, length ${fmt(s.l1, 2)} m<br>${SB('u', '1')} = (${fmt(s.u1.x, 3)}, ${fmt(s.u1.y, 3)})`) +
+      ROW('Cable 2 (to B)', `${I('β')} = ${fmt(angOf(s.u2), 1)}° above horizontal, length ${fmt(s.l2, 2)} m<br>${SB('u', '2')} = (${fmt(s.u2.x, 3)}, ${fmt(s.u2.y, 3)})`) +
+      ROW('Load on knot', `${I('W')} = ${fmt(S.W, 0)} N ↓ ${Math.abs(S.H) > 0 ? `, ${I('H')} = ${fmt(S.H, 0)} N →` : ''}`);
+    let sol = '';
+    if (!s.ok) sol = ROW('Solution', '<span class="bad">Cables collinear: the 2×2 system is singular (det = 0).</span>');
+    else {
+      sol += ROW('ΣF<sub>x</sub> = 0', `${SB('T', '1')}(${fmt(s.u1.x, 3)}) + ${SB('T', '2')}(${fmt(s.u2.x, 3)}) + ${par(S.H, 0)} = 0`);
+      sol += ROW('ΣF<sub>y</sub> = 0', `${SB('T', '1')}(${fmt(s.u1.y, 3)}) + ${SB('T', '2')}(${fmt(s.u2.y, 3)}) − ${fmt(S.W, 0)} = 0`);
+      sol += ROW('Solve the 2×2', `${SB('T', '1')} = ${RES(fmt(s.T1, 2) + ' N')}, &nbsp; ${SB('T', '2')} = ${RES(fmt(s.T2, 2) + ' N')}` +
+        (Math.abs(s.det) < 0.1 ? `<br><span class="bad">det = sin(angle between cables) = ${fmt(s.det, 3)} is tiny, so tensions blow up.</span>` : ''));
+      if (s.T1 < 0 || s.T2 < 0) sol += ROW('Physical check', '<span class="bad">A negative tension means that cable would have to push. It goes slack in reality.</span>');
+      // Lami's theorem
+      if (R > 1e-9 && s.T1 >= 0 && s.T2 >= 0) {
+        const fr = { x: S.H / R, y: -S.W / R }, ang = (a, b) => Math.acos(clamp(v2.dot(a, b), -1, 1)) / D2R;
+        const a12 = ang(s.u1, s.u2), a1R = ang(s.u1, fr), a2R = ang(s.u2, fr);
+        const sn = a => Math.sin(a * D2R);
+        if (Math.min(Math.abs(sn(a12)), Math.abs(sn(a1R)), Math.abs(sn(a2R))) > 0.02)
+          sol += ROW("Lami's theorem check", `${SB('T', '1')}/sin ${fmt(a2R, 0)}° = ${fmt(s.T1 / sn(a2R), 2)}, &nbsp; ${SB('T', '2')}/sin ${fmt(a1R, 0)}° = ${fmt(s.T2 / sn(a1R), 2)}, &nbsp; ${I('R')}/sin ${fmt(a12, 0)}° = ${fmt(R / sn(a12), 2)} <span class="ok">✓ all equal</span>`);
+      }
+      sol += ROW('Insight', `Flatter cables (small α) mean larger tension: for a symmetric hang ${I('T')} = ${I('W')} / (2 sin ${I('α')}).`, 'note');
+    }
+    return { setup, solution: sol };
+  }
+
+  const challenges = [
+    { name: 'Tension budget', make() {
+      reset(); S.W = rnd([80, 100, 120, 150]); S.A = { x: -5, y: 1 }; S.B = { x: 5, y: 1 }; S.P = { x: 0, y: 0 };
+      return { kind: 'target',
+        prompt: `Rearrange the anchors (and knot) so that <b>neither cable exceeds ${fmt(S.W, 0)} N</b>. Both tensions ≤ W.`,
+        hint: `For a symmetric hang T = W / (2 sin α). To keep T ≤ W you need sin α ≥ 0.5, i.e. cables at least 30° above horizontal.`,
+        ok: () => { const s = solve(); return !!s && s.ok && s.T1 >= 0 && s.T2 >= 0 && s.T1 <= S.W && s.T2 <= S.W; },
+        status: () => { const s = solve(); return s && s.ok ? `T₁ = ${fmt(s.T1)} N, T₂ = ${fmt(s.T2)} N (limit ${fmt(S.W, 0)} N)` : 'No solution'; } };
+    } },
+    { name: 'Equal tensions under side pull', make() {
+      reset(); S.W = 100; S.H = rnd([-1, 1]) * rnd([30, 40, 50]);
+      return { kind: 'target',
+        prompt: `A sideways pull <b>H = ${fmt(S.H, 0)} N</b> acts on the knot. Move the knot or anchors so that <b>T₁ = T₂</b> (within 3%).`,
+        hint: `With equal tensions T, the horizontal balance is T(u₁ₓ + u₂ₓ) = −H. The cables must be asymmetric: the knot has to shift against the pull.`,
+        ok: () => { const s = solve(); return !!s && s.ok && s.T1 > 0 && s.T2 > 0 && Math.abs(s.T1 - s.T2) <= 0.03 * (s.T1 + s.T2) / 2; },
+        status: () => { const s = solve(); return s && s.ok ? `T₁ = ${fmt(s.T1)} N, T₂ = ${fmt(s.T2)} N` : 'No solution'; } };
+    } },
+    { name: 'Find T₁', make() {
+      reset(); S.W = rnd([50, 80, 100, 120, 150, 200]); S.H = 0;
+      const al = rnd([30, 45, 60]), be = rnd([30, 45, 60]);
+      S.P = { x: 0, y: -1 };
+      S.A = { x: -3.5 * Math.cos(al * D2R), y: -1 + 3.5 * Math.sin(al * D2R) };
+      S.B = { x: 3.5 * Math.cos(be * D2R), y: -1 + 3.5 * Math.sin(be * D2R) };
+      return { kind: 'answer', unit: 'N',
+        prompt: `A ${fmt(S.W, 0)} N weight hangs from two cables at α = ${al}° (left) and β = ${be}° (right) above the horizontal. Find the tension <b>T₁</b> in the <b>left</b> cable (N).`,
+        hint: `ΣF<sub>x</sub>: T₁cos α = T₂cos β. ΣF<sub>y</sub>: T₁sin α + T₂sin β = W. Eliminate T₂. Or use Lami's theorem.`,
+        answer: () => solve().T1, tolAbs: 0.6, tolRel: 0.01 };
+    } }
+  ];
+
+  return {
+    id: 'cable', title: '2D Cables',
+    blurb: `<h2>Particle equilibrium: two cables</h2><p>The knot P is a particle in equilibrium: the two tensions and the load must sum to zero. <b>ΣF<sub>x</sub> = 0</b> and <b>ΣF<sub>y</sub> = 0</b> give two equations for the two unknown tensions.</p>
+    <ul><li>Drag the anchors apart: the cables flatten and the tension climbs.</li><li>Add a side pull H and see the force polygon stay closed.</li><li>Make the cables collinear to see why a taut horizontal line can never hold a weight.</li></ul>`,
+    hint: 'Drag the anchors and the knot',
+    controls: [
+      { id: 'W', label: 'Weight W', min: 0, max: 200, step: 5, unit: 'N', get: () => S.W, set: v => S.W = v },
+      { id: 'H', label: 'Side pull H', min: -100, max: 100, step: 5, unit: 'N', get: () => S.H, set: v => S.H = v },
+      { id: 'ang', type: 'toggle', label: 'Angles', get: () => S.angles, set: v => S.angles = v, free: true },
+      { id: 'tri', type: 'toggle', label: 'Force polygon', get: () => S.tri, set: v => S.tri = v, free: true },
+      { id: 'snap', type: 'toggle', label: 'Snap', get: () => app.snap, set: v => app.snap = v, free: true },
+      { id: 'rst', type: 'button', label: 'Reset', onClick: reset }
+    ],
+    reset, draw, equations, challenges,
+    down(x, y) { if (app.locked) return false; const h = hit(hs, x, y); if (!h) return false; drag = h.key; move(x, y); return true; },
+    move(x, y) { if (drag) move(x, y); },
+    up() { drag = null; },
+    hover(x, y) { return !app.locked && hit(hs, x, y) ? 'grab' : 'default'; }
+  };
+})();
+
+/* =====================================================================
+   MODULE 4 — 3D cable tension (tripod)
+   ===================================================================== */
+const TripodMod = (() => {
+  const S = {};
+  const cam = { yaw: 14 * D2R, pitch: 26 * D2R, dist: 15, tx: 0, ty: 0, tz: 2.4, f: 600, cx: 0, cy: 0 };
+  let hs = [], drag = null, last = null;
+  const FS = 0.016;
+
+  function equil(rho = 3.5, h = 2.5, pz = 1.5) {
+    const ang = [90, 210, 330].map(a => a * D2R);
+    S.A = ang.map(a => [rho * Math.cos(a), rho * Math.sin(a), pz + h]);
+    S.P = [0, 0, pz];
+  }
+  function reset() {
+    equil(); S.W = 100; S.Fx = 0; S.Fy = 0; S.vec = true; S.vert = false; sel3 = null;
+    cam.yaw = 14 * D2R; cam.pitch = 26 * D2R; cam.dist = 15;
+  }
+  let sel3 = null;
+  reset();
+  const solve = () => tripod(S.A, S.P, S.W, S.Fx, S.Fy);
+
+  function proj(p) {
+    let x = p[0] - cam.tx, y = p[1] - cam.ty, z = p[2] - cam.tz;
+    const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+    const x1 = cy * x - sy * y, y1 = sy * x + cy * y;
+    const dep = cp * y1 - sp * z, up = sp * y1 + cp * z;
+    const d = Math.max(0.3, cam.dist + dep), f = cam.f / d;
+    return { x: cam.cx + x1 * f, y: cam.cy - up * f, d, f };
+  }
+  /* screen point -> world point on the horizontal plane z = z0 */
+  function unproj(sx, sy, z0) {
+    const dx = (sx - cam.cx) / cam.f, dy = -(sy - cam.cy) / cam.f;
+    const cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch), cy = Math.cos(cam.yaw), sy_ = Math.sin(cam.yaw);
+    const den = cp * dy - sp;
+    if (Math.abs(den) < 1e-6) return null;
+    const t = (z0 - cam.tz - sp * cam.dist) / den;
+    if (t < 0) return null;
+    const x1 = dx * t, y2 = t - cam.dist, z2 = dy * t;
+    const y1 = cp * y2 + sp * z2;
+    return [cy * x1 + sy_ * y1 + cam.tx, -sy_ * x1 + cy * y1 + cam.ty, z0];
+  }
+  const seg3 = (g, a, b, c, lw, dash) => { const p = proj(a), q = proj(b); line(g, p.x, p.y, q.x, q.y, c, lw, dash); };
+
+  function draw(g, w, h) {
+    cam.cx = w / 2; cam.cy = h * 0.5; cam.f = Math.min(w, h) * 1.1;
+    const s = solve(), hide = app.hideSolution;
+    // floor grid
+    for (let i = -5; i <= 5; i++) { seg3(g, [i, -5, 0], [i, 5, 0], COL.grid, 1); seg3(g, [-5, i, 0], [5, i, 0], COL.grid, 1); }
+    // axes
+    const ao = [-5, 5, 0];
+    [['x', [2, 0, 0]], ['y', [0, 2, 0]], ['z', [0, 0, 2]]].forEach(([n, v]) => {
+      const e = v3.add(ao, v);
+      seg3(g, ao, e, COL.muted, 1.8);
+      const p = proj(e); text(g, n, p.x + 8, p.y - 6, COL.muted, { size: 12, bold: true });
+    });
+    hs = [];
+    const P = S.P, pp = proj(P);
+    // drop lines + shadows
+    const drop = (p, c) => { seg3(g, p, [p[0], p[1], 0], c, 1, [3, 4]); const q = proj([p[0], p[1], 0]); disc(g, q.x, q.y, 3, c); };
+    S.A.forEach(a => drop(a, COL.muted)); drop(P, COL.muted);
+
+    // cables
+    S.A.forEach((a, i) => {
+      const ap = proj(a), t = s ? s.T[i] : NaN, bad = !hide && (!s || !s.ok || t < 0);
+      line(g, ap.x, ap.y, pp.x, pp.y, bad ? COL.warn : COL.tension, hide ? 3 : bad ? 2.5 : clamp(2 + Math.abs(t) / Math.max(S.W, 40) * 1.6, 2.5, 6.5), bad ? [7, 5] : null);
+      g.save(); g.fillStyle = COL.ink; g.fillRect(ap.x - 7, ap.y - 7, 14, 14); g.restore();
+      text(g, `A${SUBN[i + 1]}`, ap.x + 12, ap.y - 12, COL.ink, { bold: true });
+      const lt = 0.4, lx = ap.x + (pp.x - ap.x) * lt, ly = ap.y + (pp.y - ap.y) * lt;
+      if (s && s.ok && !hide) text(g, `T${SUBN[i + 1]} = ${fmt(t, 1)} N`, lx + (pp.x >= ap.x ? 8 : -8), ly, bad ? COL.warn : COL.tension, { bold: true, size: 13, align: pp.x >= ap.x ? 'left' : 'right' });
+      hs.push({ key: 'A' + i, x: ap.x, y: ap.y, r: 13, d: ap.d });
+      if (!app.locked) handleDot(g, ap.x, ap.y, COL.ink, drag === 'A' + i);
+    });
+
+    // force vectors at P
+    if (S.vec) {
+      const a3 = (dir, len, c, lab) => {
+        const e = v3.add(P, v3.mul(dir, Math.min(len, 5))), q = proj(e);
+        arrow(g, pp.x, pp.y, q.x, q.y, c, 3, 11); if (lab) text(g, lab, q.x + 8, q.y + 4, c, { bold: true, size: 12 });
+      };
+      a3([0, 0, -1], S.W * FS, COL.force, `W = ${fmt(S.W, 0)} N`);
+      if (Math.abs(S.Fx) > 0) a3([Math.sign(S.Fx), 0, 0], Math.abs(S.Fx) * FS, COL.force, `Fx = ${fmt(S.Fx, 0)}`);
+      if (Math.abs(S.Fy) > 0) a3([0, Math.sign(S.Fy), 0], Math.abs(S.Fy) * FS, COL.force, `Fy = ${fmt(S.Fy, 0)}`);
+    }
+    // load block + knot
+    g.save(); g.fillStyle = COL.force; g.globalAlpha = 0.2; const bl = 14; g.fillRect(pp.x - bl, pp.y + 6, bl * 2, bl * 1.6); g.globalAlpha = 1; g.strokeStyle = COL.force; g.lineWidth = 2; g.strokeRect(pp.x - bl, pp.y + 6, bl * 2, bl * 1.6); g.restore();
+    handleDot(g, pp.x, pp.y, COL.ink, drag === 'P');
+    hs.push({ key: 'P', x: pp.x, y: pp.y, r: 13, d: pp.d });
+    text(g, 'P', pp.x - 14, pp.y - 12, COL.ink, { bold: true });
+
+    if (hide) text(g, 'T₁ = ?   T₂ = ?   T₃ = ?', w / 2, 40, COL.tension, { bold: true, align: 'center' });
+    else if (s && !s.ok) text(g, 'Cables are coplanar: the 3×3 system is singular.', w / 2, 40, COL.warn, { bold: true, align: 'center' });
+    else if (s && s.T.some(t => t < 0)) text(g, 'Negative tension: that cable would have to push, so the configuration cannot hold.', w / 2, 40, COL.warn, { bold: true, align: 'center' });
+    text(g, 'drag empty space to orbit · wheel to zoom', w - 12, h - 14, COL.muted, { size: 11.5, align: 'right', halo: false });
+  }
+
+  const clampPos = (p, isP) => [clamp(p[0], -5, 5), clamp(p[1], -5, 5), clamp(p[2], isP ? 0.2 : 0.5, isP ? 6 : 8)];
+  function target(key) { return key === 'P' ? S.P : S.A[+key[1]]; }
+  function setTarget(key, v) { if (key === 'P') S.P = clampPos(v, true); else S.A[+key[1]] = clampPos(v, false); }
+
+  return {
+    id: 'tripod', title: '3D Cables',
+    blurb: `<h2>Three-cable tension in 3D</h2><p>A load hangs at P from three cables. Write each cable's direction as a unit vector <b>û</b><sub>i</sub> = (A<sub>i</sub> − P)/|A<sub>i</sub> − P|. Equilibrium <b>ΣF = 0</b> gives three scalar equations (x, y, z) for the three tensions: a 3×3 linear system.</p>
+    <ul><li>Drag anchors and P across the floor plane. Switch to "vertical" to change their height.</li><li>Orbit the view: drag empty space. Zoom with the wheel.</li><li>Push P outside the anchors' footprint: a tension goes negative (slack cable).</li></ul>`,
+    hint: 'Drag anchors / P · drag empty space to orbit',
+    controls: [
+      { id: 'W', label: 'Weight W', min: 10, max: 200, step: 10, unit: 'N', get: () => S.W, set: v => S.W = v },
+      { id: 'Fx', label: 'Side load Fx', min: -50, max: 50, step: 5, unit: 'N', get: () => S.Fx, set: v => S.Fx = v },
+      { id: 'Fy', label: 'Side load Fy', min: -50, max: 50, step: 5, unit: 'N', get: () => S.Fy, set: v => S.Fy = v },
+      { id: 'plane', type: 'seg', label: 'Drag', options: [['h', 'horizontal'], ['v', 'vertical']], get: () => S.vert ? 'v' : 'h', set: v => S.vert = v === 'v', free: true },
+      { id: 'vec', type: 'toggle', label: 'Force vectors', get: () => S.vec, set: v => S.vec = v, free: true },
+      { id: 'snap', type: 'toggle', label: 'Snap', get: () => app.snap, set: v => app.snap = v, free: true },
+      { id: 'rst', type: 'button', label: 'Reset', onClick: reset }
+    ],
+    reset, draw,
+    challenges: [
+      { name: 'Equalise the tensions', make() {
+        reset(); S.W = rnd([90, 120, 150]);
+        S.P = [rnd([-1.5, -1, 1, 1.5]), rnd([-1.5, -1, 1, 1.5]), 1.5];
+        return { kind: 'target',
+          prompt: `The knot has been pushed off-centre. Move P (or the anchors) so that <b>all three tensions are equal</b> (within 3%).`,
+          hint: `By symmetry, equal tensions occur when P sits directly below the centroid of an equilateral anchor triangle.`,
+          ok: () => { const s = solve(); if (!s || !s.ok || s.T.some(t => t <= 0)) return false; const m = (s.T[0] + s.T[1] + s.T[2]) / 3; return Math.max(...s.T) - Math.min(...s.T) <= 0.03 * m; },
+          status: () => { const s = solve(); return s && s.ok ? `T₁ = ${fmt(s.T[0])}, T₂ = ${fmt(s.T[1])}, T₃ = ${fmt(s.T[2])} N` : 'No solution'; } };
+      } },
+      { name: 'Lighten the load', make() {
+        reset(); S.W = rnd([90, 120, 150]);
+        return { kind: 'target',
+          prompt: `Right now each cable carries about 57% of W. Rearrange the anchors or P so that <b>every tension is below 0.5 W = ${fmt(S.W / 2, 0)} N</b>.`,
+          hint: `Steeper cables carry less: for the symmetric case T = W / (3 sin θ). Raise the anchors or lower P (use vertical drag).`,
+          ok: () => { const s = solve(); return !!s && s.ok && s.T.every(t => t > 0 && t < S.W / 2); },
+          status: () => { const s = solve(); return s && s.ok ? `max T = ${fmt(Math.max(...s.T))} N (limit ${fmt(S.W / 2, 0)} N)` : 'No solution'; } };
+      } },
+      { name: 'Symmetric tripod', make() {
+        const [rho, h] = rnd([[3, 4], [4, 3], [1.5, 2], [2, 1.5]]);
+        reset(); S.W = rnd([60, 90, 120, 150, 180]); equil(rho, h, 1.5);
+        return { kind: 'answer', unit: 'N',
+          prompt: `Three identical cables are spaced 120° apart. Each anchor is ${fmt(rho, 1)} m horizontally and ${fmt(h, 1)} m vertically from P. Find the tension <b>T</b> in each cable, in newtons (W = ${fmt(S.W, 0)} N).`,
+          hint: `By symmetry all tensions are equal. The horizontal parts cancel; only the vertical parts support W: 3·T·sin θ = W, where sin θ = height / cable length.`,
+          answer: () => solve().T[0], tolAbs: 0.6, tolRel: 0.01 };
+      } }
+    ],
+    equations() {
+      const s = solve(), A = S.A, P = S.P;
+      if (!s) return { setup: ROW('Geometry', 'A cable has zero length.'), solution: '' };
+      const v = a => `(${a.map(x => fmt(x, 2)).join(', ')})`;
+      let setup = ROW('Points (m)', `${I('P')} = ${v(P)}<br>` + A.map((a, i) => `${SB('A', i + 1)} = ${v(a)}`).join('<br>')) +
+        ROW('Load', `${I('W')} = ${fmt(S.W, 0)} N ↓` + (S.Fx || S.Fy ? `, side load (${fmt(S.Fx, 0)}, ${fmt(S.Fy, 0)}) N` : '')) +
+        ROW('Unit vectors', `${I('û')}<sub>i</sub> = (${SB('A', 'i')} − ${I('P')}) / |${SB('A', 'i')} − ${I('P')}|<br>` +
+          s.u.map((u, i) => `${I('û')}<sub>${i + 1}</sub> = ${v(u).replace(/\.(\d\d)/g, '.$1')} &nbsp;<span style="font-size:.8em;color:var(--muted)">(length ${fmt(s.l[i], 2)} m)</span>`).join('<br>'));
+      const pad = (x, n = 6) => fmt(x, 2).padStart(n);
+      const rows = [0, 1, 2].map(r => `${pad(s.m[r][0])} ${pad(s.m[r][1])} ${pad(s.m[r][2])}`);
+      const br = (ls) => ls.map((t, i) => (i === 0 ? '⎡' : i === ls.length - 1 ? '⎣' : '⎢') + ' ' + t + ' ' + (i === 0 ? '⎤' : i === ls.length - 1 ? '⎦' : '⎥'));
+      const Tcol = s.ok ? s.T.map(t => fmt(t, 1).padStart(7)) : ['  T₁', '  T₂', '  T₃'];
+      const rhs = [fmt(-S.Fx, 0), fmt(-S.Fy, 0), fmt(S.W, 0)].map(x => x.padStart(5));
+      const A_ = br(rows), T_ = br(['  T₁', '  T₂', '  T₃']), B_ = br(rhs);
+      const mat = [0, 1, 2].map(i => `${A_[i]}${T_[i]}${i === 1 ? '  =  ' : '     '}${B_[i]}`).join('\n');
+      let sol = ROW('Equilibrium ΣF = 0', `${SB('T', '1')}${I('û')}<sub>1</sub> + ${SB('T', '2')}${I('û')}<sub>2</sub> + ${SB('T', '3')}${I('û')}<sub>3</sub> + (${I('F')}<sub>x</sub>, ${I('F')}<sub>y</sub>, −${I('W')}) = 0`) +
+        ROW('As a matrix', `<pre class="mat">${mat}</pre>`);
+      const comp = ['x', 'y', 'z'].map((c, r) => `ΣF<sub>${c}</sub>: ${SB('T', '1')}(${fmt(s.m[r][0], 3)}) + ${SB('T', '2')}(${fmt(s.m[r][1], 3)}) + ${SB('T', '3')}(${fmt(s.m[r][2], 3)}) = ${fmt([-S.Fx, -S.Fy, S.W][r], 0)}`).join('<br>');
+      sol += ROW('Component equations', comp);
+      if (!s.ok) sol += ROW('Solution', '<span class="bad">det = 0: the three cable directions are coplanar, so the system is singular.</span>');
+      else {
+        sol += ROW('Solve (Gauss elimination)', `${SB('T', '1')} = ${RES(fmt(s.T[0], 2) + ' N')}, &nbsp; ${SB('T', '2')} = ${RES(fmt(s.T[1], 2) + ' N')}, &nbsp; ${SB('T', '3')} = ${RES(fmt(s.T[2], 2) + ' N')}`);
+        if (s.T.some(t => t < 0)) sol += ROW('Physical check', '<span class="bad">A negative tension means that cable would have to push, so it goes slack.</span>');
+        const sum = s.u.reduce((acc, u, i) => v3.add(acc, v3.mul(u, s.T[i])), [S.Fx, S.Fy, -S.W]);
+        sol += ROW('Check', `|ΣF| = ${fmt(v3.len(sum), 4)} N ≈ 0 <span class="ok">✓</span>`);
+      }
+      return { setup, solution: sol };
+    },
+    down(x, y, e) {
+      last = { x, y };
+      if (!app.locked) {
+        const h = hit(hs.map(o => ({ ...o })), x, y);
+        if (h) { drag = h.key; return true; }
+      }
+      drag = 'orbit'; return true;
+    },
+    move(x, y) {
+      if (!drag || !last) return;
+      const dx = x - last.x, dy = y - last.y; last = { x, y };
+      if (drag === 'orbit') {
+        cam.yaw -= dx * 0.008; cam.pitch = clamp(cam.pitch + dy * 0.006, 8 * D2R, 82 * D2R);
+        return;
+      }
+      const p = target(drag);
+      if (S.vert) {
+        const pr = proj(p), dz = -dy * (pr.d / cam.f) / Math.max(0.2, Math.cos(cam.pitch));
+        setTarget(drag, [p[0], p[1], p[2] + dz]);
+      } else {
+        const w = unproj(x, y, p[2]);
+        if (w) setTarget(drag, [snapv(w[0], 0.5), snapv(w[1], 0.5), p[2]]);
+      }
+    },
+    up() { drag = null; last = null; },
+    hover(x, y) { return app.locked ? 'grab' : hit(hs, x, y) ? 'pointer' : 'grab'; },
+    wheel(dy) { cam.dist = clamp(cam.dist * (1 + Math.sign(dy) * 0.08), 8, 32); }
+  };
+})();
+
+/* =====================================================================
+   App shell: tabs, challenge harness, render loop
+   ===================================================================== */
+const MODS = [FeelMod, MomentMod, BeamMod, CableMod, TripodMod];
+const ch = { mode: 'sandbox', cur: null, score: 0, streak: 0, solved: false, hold: 0, hint: false, last: -1, tries: 0 };
+const HOLD = 0.9;
+
+function renderTabs() {
+  const nav = $('#tabs'); nav.innerHTML = '';
+  MODS.forEach(m => {
+    const b = document.createElement('button'); b.textContent = m.title; b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(m === app.mod));
+    b.onclick = () => select(m);
+    nav.appendChild(b);
+  });
+}
+function select(m) {
+  app.mod = m; ch.mode = 'sandbox'; ch.cur = null; app.locked = false; app.hideSolution = false;
+  m.reset();
+  renderTabs(); buildControls(m);
+  $('#blurb').innerHTML = m.blurb;
+  renderChallenge(); app.dirty = true;
+}
+function setMode(mode) {
+  ch.mode = mode;
+  if (mode === 'sandbox') { ch.cur = null; app.locked = false; app.hideSolution = false; app.mod.reset(); renderChallenge(); app.dirty = true; }
+  else newChallenge();
+}
+function newChallenge() {
+  const defs = app.mod.challenges;
+  let i; do { i = Math.floor(Math.random() * defs.length); } while (defs.length > 1 && i === ch.last);
+  ch.last = i;
+  ch.cur = defs[i].make(); ch.cur.name = defs[i].name;
+  ch.solved = false; ch.hold = 0; ch.hint = false; ch.tries = 0;
+  app.locked = ch.cur.kind === 'answer';
+  app.hideSolution = app.locked;
+  renderChallenge(); app.dirty = true;
+}
+function win() {
+  ch.solved = true; ch.score += ch.hint ? 5 : 10; ch.streak++; app.flash = 1;
+  app.locked = false; app.hideSolution = false;
+  renderChallenge(); app.dirty = true;
+}
+function renderChallenge() {
+  const box = $('#challenge');
+  const seg = `<div class="seg" role="group" aria-label="Mode"><button data-m="sandbox" aria-pressed="${ch.mode === 'sandbox'}">Sandbox</button><button data-m="challenge" aria-pressed="${ch.mode === 'challenge'}">Challenge</button></div>`;
+  let html = `<div class="chhead"><h2 style="margin:0">Mode</h2>${seg}${ch.mode === 'challenge' ? `<span class="score">Score ${ch.score} · Streak ${ch.streak}</span>` : ''}</div>`;
+  if (ch.mode === 'sandbox') html += `<p class="status">Explore freely. Switch to <b>Challenge</b> for scored puzzles built on this module.</p>`;
+  else if (ch.cur) {
+    const c = ch.cur;
+    html += `<div class="prompt"><b>${c.name}.</b> ${c.prompt}</div>`;
+    if (c.kind === 'answer') {
+      html += `<div class="ans"><input id="ansIn" inputmode="decimal" autocomplete="off" placeholder="Your answer (${c.unit})" ${ch.solved ? 'disabled' : ''}><button class="btn primary" id="ansBtn" ${ch.solved ? 'disabled' : ''}>Check</button></div>`;
+      if (!ch.solved) html += `<div class="locked-note">The diagram is locked. Solve it, then the worked solution is revealed.</div>`;
+    } else html += `<div class="status" id="chStatus"></div><div class="bar"><i id="chBar"></i></div>`;
+    html += `<div class="fb ${ch.solved ? 'ok' : ''}" id="chFb" aria-live="polite">${ch.solved ? `✓ Solved! +${ch.hint ? 5 : 10} points.` : ''}</div>`;
+    if (ch.hint && !ch.solved) html += `<div class="hint">${c.hint}</div>`;
+    html += `<div class="row">${ch.solved ? '<button class="btn primary" id="nextBtn">Next challenge</button>' : '<button class="btn" id="hintBtn">Hint (−5)</button><button class="btn" id="skipBtn">Skip</button>'}</div>`;
+  }
+  box.innerHTML = html;
+  box.querySelectorAll('.seg button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  const on = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  on('#hintBtn', () => { ch.hint = true; renderChallenge(); });
+  on('#skipBtn', () => { ch.streak = 0; newChallenge(); });
+  on('#nextBtn', newChallenge);
+  on('#ansBtn', checkAnswer);
+  const inp = $('#ansIn'); if (inp) { inp.onkeydown = e => { if (e.key === 'Enter') checkAnswer(); }; if (!ch.solved) inp.focus({ preventScroll: true }); }
+}
+function checkAnswer() {
+  const c = ch.cur, inp = $('#ansIn'), fb = $('#chFb'); if (!c || ch.solved) return;
+  const v = parseFloat(inp.value.replace('−', '-').replace(',', '.'));
+  if (!isFinite(v)) { fb.className = 'fb bad'; fb.textContent = 'Enter a number.'; return; }
+  const a = c.answer(), tol = Math.max(c.tolAbs || 0, (c.tolRel || 0) * Math.abs(a));
+  if (Math.abs(v - a) <= tol) win();
+  else {
+    ch.streak = 0; ch.tries++;
+    fb.className = 'fb bad';
+    fb.textContent = ch.tries >= 2 && Math.abs(v + a) <= tol ? 'Close: check the sign convention (counter-clockwise / upward positive).' : 'Not quite. Check signs, units and which point you take moments about.';
+    if (ch.tries >= 2 && !ch.hint) { ch.hint = true; const h = document.createElement('div'); h.className = 'hint'; h.innerHTML = c.hint; fb.after(h); }
+    const sc = $('#challenge .score'); if (sc) sc.textContent = `Score ${ch.score} · Streak ${ch.streak}`;
+  }
+}
+let lastStatus = '';
+function tick(dt) {
+  if (app.mod.step) app.mod.step(dt);
+  if (app.flash > 0) { app.flash = Math.max(0, app.flash - dt * 1.6); app.dirty = true; }
+  if (ch.mode === 'challenge' && ch.cur && ch.cur.kind === 'target' && !ch.solved) {
+    let ok = false; try { ok = ch.cur.ok(); } catch (e) { }
+    ch.hold = ok ? ch.hold + dt : Math.max(0, ch.hold - dt * 2);
+    if (ch.hold >= HOLD) return win();
+    const bar = $('#chBar'), st = $('#chStatus');
+    if (bar) bar.style.width = Math.min(100, ch.hold / HOLD * 100) + '%';
+    let s = ''; try { s = ch.cur.status(); } catch (e) { }
+    if (st && s !== lastStatus) { st.textContent = s; lastStatus = s; }
+  }
+}
+function render() {
+  const m = app.mod;
+  g.clearRect(0, 0, app.w, app.h);
+  m.draw(g, app.w, app.h);
+  text(g, m.hint, 14, 18, COL.muted, { size: 12, halo: false });
+  if (app.flash > 0) { g.save(); g.fillStyle = COL.react; g.globalAlpha = app.flash * 0.16; g.fillRect(0, 0, app.w, app.h); g.restore(); }
+  const e = m.equations();
+  $('#eq').innerHTML = `<h2>Equations</h2>` + GROUP('Given') + e.setup +
+    (app.hideSolution ? `<div class="locked-note">The solution is hidden until you answer.</div>` : (e.solution ? GROUP('Solution') + e.solution : ''));
+  syncControls(m);
+}
+function resize() {
+  const r = cv.parentElement.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  app.w = r.width; app.h = r.height;
+  cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); app.dirty = true;
+}
+function pos(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+let pointerDown = false;
+cv.addEventListener('pointerdown', e => {
+  const p = pos(e);
+  if (app.mod.down(p.x, p.y, e)) { pointerDown = true; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; app.dirty = true; e.preventDefault(); }
+});
+cv.addEventListener('pointermove', e => {
+  const p = pos(e);
+  if (pointerDown) { app.mod.move(p.x, p.y, e); app.dirty = true; }
+  else cv.style.cursor = app.mod.hover ? app.mod.hover(p.x, p.y) : 'default';
+});
+const endDrag = e => { if (pointerDown) { pointerDown = false; app.mod.up(); cv.style.cursor = 'default'; app.dirty = true; } };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('pointerleave', () => { if (!pointerDown && app.mod.hover) { app.mod.hover(-999, -999); } });
+cv.addEventListener('wheel', e => { if (app.mod.wheel) { e.preventDefault(); app.mod.wheel(e.deltaY); app.dirty = true; } }, { passive: false });
+
+$('#themeBtn').onclick = () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('statics-theme', document.documentElement.dataset.theme); } catch (e) { }
+  readColors(); app.dirty = true;
+};
+try { const t = localStorage.getItem('statics-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) { }
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); app.dirty = true; });
+
+readColors();
+new ResizeObserver(resize).observe(cv.parentElement);
+select(FeelMod);
+resize();
+let lastT = performance.now();
+(function frame(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  tick(dt);
+  if (app.dirty) { app.dirty = false; render(); }
+  requestAnimationFrame(frame);
+})(lastT);
+</script>
+</body>
+</html>
